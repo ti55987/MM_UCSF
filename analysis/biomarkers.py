@@ -86,8 +86,8 @@ class BioMarkers:
                 *val.values()
             )
 
-    def get_labels(self):
-        return np.array(getattr(self.marker_to_namedtuple[Behavior.__name__], 'valence'))
+    def get_labels(self, name='valence'):
+        return np.array(getattr(self.marker_to_namedtuple[Behavior.__name__], name))
 
     def get_block_name(self) -> str:
         return getattr(self.marker_to_namedtuple[Behavior.__name__], 'block')

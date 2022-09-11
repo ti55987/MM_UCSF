@@ -37,9 +37,8 @@ def get_features_in_block(marker_to_data: dict) -> np.array:
     for marker, data in marker_to_data.items():
         data = np.swapaxes(data,0,-1) # (num_features, num_blocks) => (num_blocks, num_features)
 
-        print(f'get {marker} features {data.shape}...')
         marker_features = get_features(data)
-        print(f"feature shape {marker_features.shape}")
+        print(f"{marker} feature shape {marker_features.shape}")
 
         if all_features.ndim > 1:
             all_features = np.concatenate((all_features, marker_features), axis=1)
@@ -49,12 +48,10 @@ def get_features_in_block(marker_to_data: dict) -> np.array:
     return all_features
 
 def get_features_in_all_blocks(all_blocks: dict) -> np.array:
-    all_features = []
+    all_blocks_features = []
     for block_name, markers in all_blocks.items():
         marker_to_data = markers.get_all_data()
         block_features = get_features_in_block(marker_to_data)
         print(f'{block_name} block has features: {block_features.shape}...')
-        all_features.append(all_features, block_features)
-
-    print(f"All feature shape {all_features.shape}")
-    return np.array(all_features)
+        all_blocks_features.append(block_features)
+    return np.concatenate(all_blocks_features)
