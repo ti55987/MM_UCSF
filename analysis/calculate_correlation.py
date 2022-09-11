@@ -1,10 +1,11 @@
-from biomarkers import BioMarkers, ALL_MARKERS
 import mat73
 import argparse
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.stats import kendalltau, pearsonr, spearmanr
 
+from biomarkers import BioMarkers, EEG, EMG, EOG
+from feature_extraction import concatenate_features
 # from sklearn.linear_model import LogisticRegression
 # from sklearn.pipeline import Pipeline
 
@@ -22,6 +23,18 @@ from scipy.stats import kendalltau, pearsonr, spearmanr
 # #importance is a list so you can plot it.
 # feat_importances = pd.Series(importance)
 # feat_importances.nlargest(20).plot(kind='barh',title = 'Feature Importance')
+
+MULTIPLE_CHANNELS_SIGNAL = [EEG.__name__, EMG.__name__, EOG.__name__]
+
+def get_features(data_array):
+    features=[]
+    print(f"data shape {data_array.shape}")
+    for data in data_array:
+        features.append(concatenate_features(data))
+
+    features=np.array(features)
+    print(f"feature shape {features.shape}")
+    return features
 
 def calculateEEGPearson(eegData, labels):
     arrax = np.mean(eegData, axis=1) # the eegData is in shape (128, 12288, 13)
@@ -46,18 +59,27 @@ def main():
     markers = BioMarkers(signal)
 
     while True:
-        print(
-            "[1] Blood Pressure [2] ECG [3] EEG [4] EGG [5] EMG [6] EOG [7] GSR [8] Respitory [9] TREV [10] Exit"
-        )
-        num = int(input("Enter the number of the marker to calculate:"))
-        if num == 10:
+        should_continue = input("Continue? [y/n]: ") == "y"
+        if not should_continue:
             exit()
+
         try:
             y = markers.get_labels()
-            data, field = markers.get_data(ALL_MARKERS[num - 1])
+            print(f'lables {y}')
+            marker_to_data = markers.get_all_data()
 
-            if num == 3 and field == 'data':
-                calculateEEGPearson(data, y)
+            all_features = np.array([])
+            for marker, data in marker_to_data.items():
+                print(f'get {marker} features...')
+
+                data = np.swapaxes(data,0,-1)
+                marker_features = get_features(data)
+                if all_features.ndim > 1:
+                    all_features = np.concatenate((all_features, marker_features), axis=1)
+                else:
+                    all_features = marker_features
+
+            print(f'get all features: {all_features.shape}...')
         except Exception as e:
             print(e)
 

@@ -89,13 +89,33 @@ class BioMarkers:
     def get_labels(self):
         return np.array(getattr(self.marker_to_namedtuple[Behavior.__name__], 'valence'))
 
+    def get_all_data(self):
+        marker_to_data = {}
+        for marker, data in self.marker_to_namedtuple.items():
+            if marker == Behavior.__name__:
+                continue
+
+            field_name = self.get_data_field(marker)
+            marker_to_data[marker] = np.array(getattr(data, field_name))
+        return marker_to_data
+
+    def get_data_field(self, marker):
+        if marker == TREV.__name__ :
+            return 'data1'
+        elif marker == BP.__name__ or marker == GSR.__name__:
+            return 'raw'
+
+        return 'data'
+
     def get_data(self, marker_name):
         print(f"Get {marker_name} data...")
         data  = self.marker_to_namedtuple[marker_name]
+
         print(f"All Fields: {data._fields}")
         field = input("Enter the field to inspect:")
         npdata = np.array(getattr(data, field))
-        print(npdata.shape)
+
+        print(f"The shape of the data: {npdata.shape}")
         return npdata, field
 
     def print_marker(self, marker_name):
