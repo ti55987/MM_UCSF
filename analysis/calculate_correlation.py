@@ -1,23 +1,11 @@
-import mat73
 import argparse
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.stats import kendalltau, pearsonr, spearmanr
 
-from biomarkers import BioMarkers, EEG, EMG, EOG
+from biomarkers import EEG, EMG, EOG
+from data_utils import load_data_from_file
 from feature_extraction import concatenate_features
-# from sklearn.linear_model import LogisticRegression
-# from sklearn.pipeline import Pipeline
-
-# from sklearn.preprocessing import StandardScaler
-# from sklearn.model_selection import GroupKFold,GridSearchCV,cross_val_score,cross_validate
-
-# clf=LogisticRegression()
-# gkf=GroupKFold(n_splits=5)
-# param_grid = {'classifier__C': [0.01,0.05,0.1,0.5, 1,2,3,4,5,8, 10,12,15]}
-# pipe=Pipeline([('scaler',StandardScaler()),('classifier',clf)])
-# gscv=GridSearchCV(pipe,param_grid,cv=gkf,n_jobs=16)
-# gscv.fit(features,label_array,groups=group_array)
 
 # importance = clf.coef_[0]
 # #importance is a list so you can plot it.
@@ -51,12 +39,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("file_name", help="the path to the .mat file")
     args = parser.parse_args()
-
-    raw_data = mat73.loadmat(args.file_name)
-    signal = raw_data["Signal"]
-
-    print(f"Complete loading {len(signal)} markers")
-    markers = BioMarkers(signal)
+    markers = load_data_from_file(args.file_name)
 
     while True:
         should_continue = input("Continue? [y/n]: ") == "y"

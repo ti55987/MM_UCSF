@@ -89,6 +89,9 @@ class BioMarkers:
     def get_labels(self):
         return np.array(getattr(self.marker_to_namedtuple[Behavior.__name__], 'valence'))
 
+    def get_block_name(self) -> str:
+        return getattr(self.marker_to_namedtuple[Behavior.__name__], 'block')
+
     def get_all_data(self):
         marker_to_data = {}
         for marker, data in self.marker_to_namedtuple.items():
