@@ -17,6 +17,7 @@ dependencies:
   - pip=21.1.2
   - pip:
     - sentencepiece
+    - biosppy
     - sacrebleu
     - nltk
     - timeout_decorator
