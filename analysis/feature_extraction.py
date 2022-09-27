@@ -101,19 +101,22 @@ def get_spectral_power(data, srate):
     return eeg_band_fft
 
 
+# data is (num_data_points, num_channels)
 def process_spectral_power_for_channels(data, srate):
     features = []
     for channel in range(data.shape[1]):
-        eeg_band_fft = get_spectral_power(data[channel, :], srate)
+        eeg_band_fft = get_spectral_power(data[:, channel], srate)
         fft_values = list(eeg_band_fft.values())
         features.append(fft_values)
 
     return np.concatenate(features)
 
 
+# data is (num_data_points, num_channels)
+# return features:  (num_features x num_channels)
 def concatenate_features(data):
     features = (
-        mean(data),
+        mean(data),  # (1, num_channels)
         std(data),
         ptp(data),
         var(data),

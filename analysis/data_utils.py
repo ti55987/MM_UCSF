@@ -2,7 +2,11 @@ import mat73
 import glob
 import numpy as np
 
-from feature_extraction import concatenate_features, process_spectral_power_for_channels
+from feature_extraction import (
+    concatenate_features,
+    process_spectral_power_for_channels,
+    get_spectral_power,
+)
 from biomarkers import BioMarkers, EEG
 
 
@@ -37,7 +41,6 @@ def get_features(all_epochs, get_spectral=False):
         if get_spectral:
             spf = process_spectral_power_for_channels(data, 512)
             features.append(spf)
-            print(f"get shape {spf.shape}")
         else:
             features.append(concatenate_features(data))
 
@@ -70,4 +73,22 @@ def get_features_in_all_blocks(all_blocks: dict) -> np.array:
         block_features = get_features_in_block(marker_to_data)
         print(f"{block_name} block has features: {block_features.shape}...")
         all_blocks_features.append(block_features)
+    return np.concatenate(all_blocks_features)
+
+
+def get_feature_by_name(
+    all_blocks: dict, marker_name: str, feature_name: str, channel: int = 0
+) -> np.array:
+    all_blocks_features = []
+    for block_name, markers in all_blocks.items():
+        marker_to_data = markers.get_all_data()
+        all_epoch_data = marker_to_data[marker_name]
+        all_epoch_data = np.swapaxes(
+            all_epoch_data, 0, -1
+        )  # (num_channels, num_data_points, num_epochs) => (num_epochs, num_data_points, num_channels)
+        for data in all_epoch_data:
+            f = get_spectral_power(data[:, channel])
+            all_blocks_features.append(f)
+
+    print(f"All block has features: {all_blocks_features.shape}...")
     return np.concatenate(all_blocks_features)
