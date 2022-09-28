@@ -1,15 +1,37 @@
 from scipy import stats
 import numpy as np
+from enum import Enum
+
+
+class Feature(Enum):
+    DELTA = 1
+    THETA = 2
+    ALPHA = 3
+    BETA1 = 4
+    BETA2 = 5
+    GAMMA = 6
+    MEAN = 7
+    STD = 8
+    PTP = 9
+    VAR = 10
+    MINIM = 11
+    MAXIM = 12
+    MEAN_SQUARE = 13
+    RMS = 14
+    ABS_DIFF = 15
+    SKEWNESS = 16
+    KURTOSIS = 17
+
 
 AXIS = 0
 
 EEG_BANDS = {
-    "Delta": (1, 4),
-    "Theta": (4, 8),
-    "Alpha": (8, 12),
-    "Beta1": (12, 20),
-    "Beta2": (20, 30),
-    "Gamma": (30, 50),
+    Feature.DELTA: (1, 4),
+    Feature.THETA: (4, 8),
+    Feature.ALPHA: (8, 12),
+    Feature.BETA1: (12, 20),
+    Feature.BETA2: (20, 30),
+    Feature.GAMMA: (30, 50),
 }
 
 # mean is the average of the data
@@ -77,6 +99,21 @@ def kurtosis(data):
     return stats.kurtosis(data, axis=AXIS)
 
 
+FEATURE_TO_FUNC = {
+    Feature.MEAN: mean,
+    Feature.STD: std,
+    Feature.PTP: ptp,
+    Feature.VAR: var,
+    Feature.MINIM: minim,
+    Feature.MAXIM: maxim,
+    Feature.MEAN_SQUARE: mean_square,
+    Feature.RMS: rms,
+    Feature.ABS_DIFF: abs_diffs_signal,
+    Feature.SKEWNESS: skewness,
+    Feature.KURTOSIS: kurtosis,
+}
+
+
 # get_frequency_idx returns the indexes given the frequency bands
 def get_frequency_idx(sz, srate):
     # Get frequencies for amplitudes in Hz
@@ -132,3 +169,31 @@ def concatenate_features(data):
         return features
 
     return np.concatenate(features, axis=AXIS)
+
+
+def get_feature_by_name(
+    all_blocks: dict, marker_name: str, feature_name: Feature, channel: int = 0
+):
+    all_blocks_features = []
+    for block_name, markers in all_blocks.items():
+        marker_to_data = markers.get_all_data()
+        all_epoch_data = marker_to_data[marker_name]
+        all_epoch_data = np.swapaxes(
+            all_epoch_data, 0, -1
+        )  # (num_channels, num_data_points, num_epochs) => (num_epochs, num_data_points, num_channels)
+
+        for data in all_epoch_data:
+            val = 0
+            if data.ndim > 1:
+                data = data[:, channel]
+
+            if marker_name == "EEG":
+                eeg_band_fft = get_spectral_power(data, 512)
+                val = eeg_band_fft[feature_name]
+            else:
+                func = FEATURE_TO_FUNC[feature_name]
+                val = func(data)
+
+            all_blocks_features.append(val)
+
+    return all_blocks_features

@@ -76,19 +76,11 @@ def get_features_in_all_blocks(all_blocks: dict) -> np.array:
     return np.concatenate(all_blocks_features)
 
 
-def get_feature_by_name(
-    all_blocks: dict, marker_name: str, feature_name: str, channel: int = 0
-) -> np.array:
-    all_blocks_features = []
-    for block_name, markers in all_blocks.items():
-        marker_to_data = markers.get_all_data()
-        all_epoch_data = marker_to_data[marker_name]
-        all_epoch_data = np.swapaxes(
-            all_epoch_data, 0, -1
-        )  # (num_channels, num_data_points, num_epochs) => (num_epochs, num_data_points, num_channels)
-        for data in all_epoch_data:
-            f = get_spectral_power(data[:, channel])
-            all_blocks_features.append(f)
+def get_behavior_labels(all_data, label_name):
+    all_labels = np.array([])
+    for block, markers in all_data.items():
+        y = markers.get_labels(label_name)
+        all_labels = np.concatenate((all_labels, y), axis=None)
 
-    print(f"All block has features: {all_blocks_features.shape}...")
-    return np.concatenate(all_blocks_features)
+    print(f"All labels shape: {all_labels.shape}")
+    return all_labels
