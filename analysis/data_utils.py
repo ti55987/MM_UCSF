@@ -31,6 +31,21 @@ def load_data_from_dir(dir_name: str) -> dict:
     return all_block
 
 
+def transform_to_marker_to_all_block(all_data: dict) -> dict:
+    marker_to_all_block = {}
+    for _, markers in all_data.items():
+        marker_to_data = markers.get_all_data()
+        for marker, data in marker_to_data.items():
+            if marker not in marker_to_all_block:
+                marker_to_all_block[marker] = data
+            else:
+                marker_to_all_block[marker] = np.concatenate(
+                    (marker_to_all_block[marker], data), axis=-1
+                )
+
+    return marker_to_all_block
+
+
 def get_features(all_epochs, get_spectral=False):
     all_epochs = np.swapaxes(
         all_epochs, 0, -1

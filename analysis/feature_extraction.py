@@ -172,28 +172,27 @@ def concatenate_features(data):
 
 
 def get_feature_by_name(
-    all_blocks: dict, marker_name: str, feature_name: Feature, channel: int = 0
+    all_blocks: dict,
+    feature_name: Feature,
+    channel: int = 0,
 ):
+    all_epoch_data = np.swapaxes(
+        all_blocks, 0, -1
+    )  # (num_channels, num_data_points, num_epochs) => (num_epochs, num_data_points, num_channels)
+
     all_blocks_features = []
-    for block_name, markers in all_blocks.items():
-        marker_to_data = markers.get_all_data()
-        all_epoch_data = marker_to_data[marker_name]
-        all_epoch_data = np.swapaxes(
-            all_epoch_data, 0, -1
-        )  # (num_channels, num_data_points, num_epochs) => (num_epochs, num_data_points, num_channels)
+    for data in all_epoch_data:
+        val = 0
+        if data.ndim > 1:
+            data = data[:, channel]
 
-        for data in all_epoch_data:
-            val = 0
-            if data.ndim > 1:
-                data = data[:, channel]
+        if feature_name in EEG_BANDS.keys():
+            eeg_band_fft = get_spectral_power(data, 512)
+            val = eeg_band_fft[feature_name]
+        else:
+            func = FEATURE_TO_FUNC[feature_name]
+            val = func(data)
 
-            if marker_name == "EEG":
-                eeg_band_fft = get_spectral_power(data, 512)
-                val = eeg_band_fft[feature_name]
-            else:
-                func = FEATURE_TO_FUNC[feature_name]
-                val = func(data)
-
-            all_blocks_features.append(val)
+        all_blocks_features.append(val)
 
     return all_blocks_features

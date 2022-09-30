@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.stats import kendalltau, pearsonr, spearmanr
 
-from biomarkers import BioMarkers, EEG, EMG, EOG, ALL_MARKERS
+from biomarkers import EEG, EMG, EOG
 from feature_extraction import (
     get_feature_by_name,
     Feature,
@@ -13,8 +13,8 @@ from feature_extraction import (
 MULTIPLE_CHANNELS_SIGNAL = [EEG.__name__, EMG.__name__, EOG.__name__]
 
 
-def calculate_pearson_all_features(
-    all_data: dict, labels: list, marker_name: str, channel: int = 1
+def get_pearson_corr_with_stats_features(
+    all_data: dict, labels: list, channel: int = 0
 ):
     pearson_corr = []
     features = []
@@ -22,14 +22,8 @@ def calculate_pearson_all_features(
         if f in EEG_BANDS.keys():
             continue
 
-        spf = get_feature_by_name(
-            all_blocks=all_data,
-            marker_name=marker_name,
-            feature_name=f,
-            channel=channel,
-        )
+        spf = get_feature_by_name(all_blocks=all_data, feature_name=f, channel=channel)
         corr = pearsonr(spf, labels)
-        # print(f"{marker_name} channel {channel} {feature_name} pearson correlation {corr[0]}")
         pearson_corr.append(corr[0])
         features.append(f.name)
 
