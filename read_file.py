@@ -3,6 +3,7 @@ import argparse
 
 from analysis.biomarkers import BioMarkers, ALL_MARKERS
 
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("file_name", help="the path to the .mat file")

@@ -1,7 +1,11 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 
-from calculate_correlation import get_pearson_corr_with_stats_features
+from calculate_correlation import (
+    get_pearson_corr_with_stats_features,
+    get_eeg_spectral_pearson_correlation,
+)
+from feature_extraction import EEG_BANDS
 
 
 def get_pearson_correlation_series(
@@ -22,17 +26,13 @@ def get_pearson_correlation_series(
     return ser_list
 
 
-def get_eeg_pearson_correlation_series(all_block: dict, labels: list):
+def get_eeg_pearson_correlation_series(
+    all_block: dict, labels: list, num_channel: int = 128
+):
     ser_list = []
-    num_channel = 128
     index = list(range(1, num_channel + 1, 1))
     for f in list(EEG_BANDS.keys()):
-        pearson_corr = []
-        for ch in range(num_channel):
-            spf = get_feature_by_name(all_blocks=all_block, feature_name=f, channel=ch)
-            corr = spearmanr(spf, labels)
-            pearson_corr.append(corr[0])
-
+        pearson_corr = get_eeg_spectral_pearson_correlation(all_block, labels, f)
         ser = pd.Series(data=pearson_corr, index=index)
         print(f"The mean {ser.mean()} over feature {f.name}")
 

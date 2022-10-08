@@ -5,7 +5,6 @@ import numpy as np
 from feature_extraction import (
     concatenate_features,
     process_spectral_power_for_channels,
-    get_spectral_power,
 )
 from biomarkers import BioMarkers, EEG
 
@@ -21,14 +20,14 @@ def load_data_from_file(file_name: str) -> BioMarkers:
 def load_data_from_dir(dir_name: str) -> dict:
     # All files and directories ending with .mat and that don't begin with a dot:
     all_files = glob.glob(dir_name + "/*.mat")
-    all_block = {}
+    all_data = {}
     for f in all_files:
         markers = load_data_from_file(f)
         block_name = markers.get_block_name()
         print(f"Loaded {markers.get_block_name()} block")
-        all_block[block_name] = markers
+        all_data[block_name] = markers
 
-    return all_block
+    return all_data
 
 
 def transform_to_marker_to_all_block(all_data: dict) -> dict:
