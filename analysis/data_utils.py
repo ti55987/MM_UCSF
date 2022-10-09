@@ -1,6 +1,7 @@
 import mat73
 import glob
 import numpy as np
+import scipy.io as sio
 
 from feature_extraction import (
     concatenate_features,
@@ -10,8 +11,13 @@ from biomarkers import BioMarkers, EEG
 
 
 def load_data_from_file(file_name: str) -> BioMarkers:
-    raw_data = mat73.loadmat(file_name)
-    signal = raw_data["Signal"]
+    try:
+        raw_data = mat73.loadmat(file_name)
+        signal = raw_data["Signal"]
+    except Exception as ex:
+        print(ex)
+        raw_data = sio.loadmat(file_name)
+        print(raw_data)
 
     print(f"Complete loading {len(signal)} markers")
     return BioMarkers(signal)
@@ -98,3 +104,29 @@ def get_behavior_labels(all_data, label_name):
 
     print(f"All labels shape: {all_labels.shape}")
     return all_labels
+
+
+def get_sorted_behavior_labels(all_data, label_name, sorted_blocks: list):
+    all_labels = np.array([])
+    for block in sorted_blocks:
+        y = all_data[block].get_labels(label_name)
+        all_labels = np.concatenate((all_labels, y), axis=None)
+
+    print(f"All labels shape: {all_labels.shape}")
+    return all_labels
+
+
+def get_sorted_block_to_data_by_feature(
+    all_data: dict, marker_name: str, sorted_blocks: list
+) -> dict:
+    all_blocks = np.array([])
+    for block in sorted_blocks:
+        marker_to_data = all_data[block].get_all_data()
+        data = marker_to_data[marker_name]
+        all_blocks = (
+            data
+            if all_blocks.ndim == 1
+            else np.concatenate((all_blocks, data), axis=-1)
+        )
+
+    return all_blocks
