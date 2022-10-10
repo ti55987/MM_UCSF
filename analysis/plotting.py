@@ -3,8 +3,10 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from calculate_correlation import (
+    EEG_BANDS_NAMES,
     get_pearson_corr_with_stats_features,
     get_eeg_spectral_pearson_correlation,
+    get_eeg_features_means,
 )
 from feature_extraction import EEG_BANDS
 
@@ -61,3 +63,30 @@ def plot_series(nrow: int, ncol: int, ser_list):
                 ax=axes[r][c], kind="barh", title=f"{marker_name} Spearmanr Correlation"
             )
             count += 1
+
+
+def plot_pearson_correlation_table(
+    label: str, feature_to_pc: dict, all_block_names: list, k: int = 1
+):
+    means = get_eeg_features_means(feature_to_pc, all_block_names, k)
+    fig, ax = plt.subplots(figsize=(12, 2))
+    ax.set_axis_off()
+    ax.set_title(f"{label} Pearson Correlation", fontweight="bold")
+
+    col_lables = []
+    col_lables.extend(all_block_names)
+    col_lables.append("average")
+    table = ax.table(
+        cellText=means,
+        rowLabels=EEG_BANDS_NAMES,
+        colLabels=col_lables,
+        rowColours=["palegreen"] * 11,
+        colColours=["palegreen"] * 11,
+        cellLoc="center",
+        loc="upper left",
+    )
+
+    table.auto_set_font_size(False)
+    table.set_fontsize(8.5)
+
+    plt.show()
