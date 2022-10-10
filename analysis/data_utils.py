@@ -7,20 +7,22 @@ from feature_extraction import (
     concatenate_features,
     process_spectral_power_for_channels,
 )
-from biomarkers import BioMarkers, EEG
+from biomarkers import SIOBioMarkers, Mat73BioMarkers, BioMarkersInterface, EEG
 
 
-def load_data_from_file(file_name: str) -> BioMarkers:
+def load_data_from_file(file_name: str) -> BioMarkersInterface:
     try:
         raw_data = mat73.loadmat(file_name)
         signal = raw_data["Signal"]
-    except Exception as ex:
-        print(ex)
-        raw_data = sio.loadmat(file_name)
-        print(raw_data)
 
-    print(f"Complete loading {len(signal)} markers")
-    return BioMarkers(signal)
+        print(f"Complete loading {len(signal)} markers")
+        return Mat73BioMarkers(signal)
+    except Exception as ex:
+        raw_data = sio.loadmat(file_name)
+        signal = raw_data["Signal"]
+
+        print(f"Complete loading {len(signal.dtype)} markers")
+        return SIOBioMarkers(signal)
 
 
 def load_data_from_dir(dir_name: str) -> dict:

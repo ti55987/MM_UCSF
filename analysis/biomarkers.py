@@ -210,7 +210,29 @@ ALL_MARKERS = [
 ]
 
 
-class BioMarkers:
+class BioMarkersInterface:
+    def get_labels(self, name="valence"):
+        """Get the behavior lables"""
+        pass
+
+    def get_block_name(self) -> str:
+        """Get the block name e.g. audio-hvha"""
+        pass
+
+    def get_all_data(self) -> dict:
+        """Get all the data with key as marker name and data as numpy.array"""
+        pass
+
+    def get_data_field(self, marker):
+        if marker == TREV.__name__:
+            return "data1"
+        elif marker == BP.__name__ or marker == GSR.__name__:
+            return "raw"
+
+        return "data"
+
+
+class Mat73BioMarkers(BioMarkersInterface):
     def __init__(self, marker_data: dict):
         self.marker_to_namedtuple = {}
         for marker, val in marker_data.items():
@@ -234,14 +256,6 @@ class BioMarkers:
             marker_to_data[marker] = np.array(getattr(data, field_name))
         return marker_to_data
 
-    def get_data_field(self, marker):
-        if marker == TREV.__name__:
-            return "data1"
-        elif marker == BP.__name__ or marker == GSR.__name__:
-            return "raw"
-
-        return "data"
-
     def get_data(self, marker_name):
         print(f"Get {marker_name} data...")
         data = self.marker_to_namedtuple[marker_name]
@@ -262,3 +276,26 @@ class BioMarkers:
             field = input("Enter the field to inspect:")
             print(getattr(data, field))
             exit = input("Exit inpecting this marker? [y/n]: ") == "y"
+
+
+class SIOBioMarkers(BioMarkersInterface):
+    def __init__(self, marker_data):
+        self.marker_to_data = {}
+        for marker in ALL_MARKERS:
+            self.marker_to_data[marker] = marker_data[marker][0][0]
+
+    def get_labels(self, name="valence"):
+        return self.marker_to_data[Behavior.__name__][name].item()
+
+    def get_block_name(self) -> str:
+        return self.marker_to_data[Behavior.__name__]["block"].item()[0]
+
+    def get_all_data(self):
+        marker_to_raw_data = {}
+        for marker, data in self.marker_to_data.items():
+            if marker == Behavior.__name__:
+                continue
+
+            field_name = self.get_data_field(marker)
+            marker_to_raw_data[marker] = data[field_name].item()
+        return marker_to_raw_data

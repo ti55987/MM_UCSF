@@ -172,7 +172,7 @@ def concatenate_features(data):
 
 
 def get_feature_by_name(
-    all_blocks: dict,
+    all_blocks: np.ndarray,
     feature_name: Feature,
     channel: int = 0,
 ):

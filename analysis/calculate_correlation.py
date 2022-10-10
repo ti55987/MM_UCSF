@@ -13,7 +13,7 @@ MULTIPLE_CHANNELS_SIGNAL = [EEG.__name__, EMG.__name__, EOG.__name__]
 
 
 def get_pearson_corr_with_stats_features(
-    all_data: dict, labels: list, channel: int = 0
+    all_data: np.ndarray, labels: list, channel: int = 0
 ):
     pearson_corr = []
     features = []
@@ -38,7 +38,7 @@ def divide_chunks(l, n):
 
 
 def get_eeg_spectral_pearson_correlation(
-    all_block: dict,
+    all_blocks: np.ndarray,
     labels: list,
     eeg_band: Feature,
     num_channel: int = 128,
@@ -48,7 +48,7 @@ def get_eeg_spectral_pearson_correlation(
     labels_chunks = list(divide_chunks(labels, num_blocks))
     for ch in range(num_channel):
         spf = get_feature_by_name(
-            all_blocks=all_block, feature_name=eeg_band, channel=ch
+            all_blocks=all_blocks, feature_name=eeg_band, channel=ch
         )
 
         spf_chunks = list(divide_chunks(spf, num_blocks))

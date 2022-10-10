@@ -1,4 +1,5 @@
 import pandas as pd
+import numpy as np
 import matplotlib.pyplot as plt
 
 from calculate_correlation import (
@@ -27,7 +28,7 @@ def get_pearson_correlation_series(
 
 
 def get_eeg_pearson_correlation_series(
-    all_block: dict, labels: list, num_channel: int = 128
+    all_block: np.ndarray, labels: list, num_channel: int = 128
 ):
     ser_list = []
     index = list(range(1, num_channel + 1, 1))
