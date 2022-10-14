@@ -101,8 +101,8 @@ def plot_pearson_correlation_table(
     plt.show()
 
 
-def plot_eeg_topomap(
-    label: str,
+def plot_eeg_topomap_one_block(
+    condition: str,
     spectral_feature: Feature,
     feature_to_pc: dict,
     all_block_names: list,
@@ -115,8 +115,52 @@ def plot_eeg_topomap(
         gridspec_kw={"width_ratios": [3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 1]},
     )
 
-    for i in range(len(all_block_names)):
-        axes[i].set_xlabel(all_block_names[i], fontsize=25)
+    fig.suptitle(
+        f"{spectral_feature.name} <> {condition} Pearson Correlation",
+        fontsize=40,
+        y=1.3,
+    )
+
+    _plot_eeg_topomap(
+        feature_to_pc[spectral_feature], all_block_names, axes, num_epochs
+    )
+
+
+def plot_eeg_topomap_all_blocks(
+    condition: str,
+    feature_to_pc: dict,
+    num_epochs: int = 130,
+):
+    fig, axes = plt.subplots(
+        1,
+        7,
+        figsize=(30, 5),
+        gridspec_kw={"width_ratios": [3, 3, 3, 3, 3, 3, 1]},
+    )
+
+    fig.suptitle(
+        f"EEG spectral feature vs {condition} Pearson Correlation", fontsize=40, y=1.3
+    )
+
+    all_features = []
+    all_block_pc_mean = np.array([])
+    for f in list(EEG_BANDS.keys()):
+        all_features.append(f.name)
+        pearson_corr = np.mean(feature_to_pc[f], axis=1)
+        all_block_pc_mean = (
+            pearson_corr
+            if len(all_block_pc_mean) == 0
+            else np.vstack((all_block_pc_mean, pearson_corr))
+        )
+
+    all_block_pc_mean = np.swapaxes(all_block_pc_mean, 0, 1)
+
+    _plot_eeg_topomap(all_block_pc_mean, all_features, axes, num_epochs)
+
+
+def _plot_eeg_topomap(data, xlables, axes, num_epochs):
+    for i in range(len(xlables)):
+        axes[i].set_xlabel(xlables[i], fontsize=25)
         axes[i].xaxis.set_label_position("top")
 
     sampling_freq = 1  # in Hertz
@@ -127,16 +171,16 @@ def plot_eeg_topomap(
     )
     info.set_montage(EEG_MONTAGES)
 
-    fig.suptitle(
-        f"{spectral_feature.name} <> {label} Pearson Correlation", fontsize=40, y=1.3
-    )
     evoked_array = mne.EvokedArray(
-        feature_to_pc[spectral_feature],
+        data,
         info,
         tmin=1,
         nave=num_epochs,
         comment="simulated",
     )
-    return evoked_array.plot_topomap(
-        axes=axes, time_format="", ch_type="eeg", units="score", scalings=1
+    efig = evoked_array.plot_topomap(
+        axes=axes, time_format="", ch_type="eeg", units="score", scalings=1, show=False
     )
+    efig.axes[-1].set_title("Score", fontsize=25)
+    efig.axes[-1].tick_params(labelsize=25)
+    plt.show()
