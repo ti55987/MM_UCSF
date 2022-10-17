@@ -118,7 +118,7 @@ def get_sorted_behavior_labels(all_data, label_name, sorted_blocks: list):
     return all_labels
 
 
-def get_sorted_block_to_data_by_feature(
+def get_sorted_block_to_data_by_marker(
     all_data: dict, marker_name: str, sorted_blocks: list
 ) -> dict:
     all_blocks = np.array([])

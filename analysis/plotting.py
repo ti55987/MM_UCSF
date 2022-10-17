@@ -12,7 +12,6 @@ from calculate_correlation import (
     EEG_BANDS_NAMES,
     EEG_BANDS_LIST,
     get_pearson_corr_with_stats_features,
-    get_eeg_spectral_pearson_correlation,
     get_eeg_features_means,
 )
 from feature_extraction import EEG_BANDS, Feature
@@ -91,6 +90,42 @@ def plot_pearson_correlation_table(
         colLabels=col_lables,
         rowColours=["palegreen"] * 11,
         colColours=["palegreen"] * 11,
+        cellLoc="center",
+        loc="upper left",
+    )
+
+    table.auto_set_font_size(False)
+    table.set_fontsize(8.5)
+
+    plt.show()
+
+
+def plot_pearson_correlation_table_by_features(
+    label: str,
+    feature_to_pc: dict,
+    all_block_names: list,
+    features: list,
+):
+    means = np.zeros((len(features), len(all_block_names)))
+    i = 0
+    row_labels = []
+    for f in features:
+        row_labels.append(f.name)
+        means[i] = np.round_(feature_to_pc[f], decimals=3)
+        i += 1
+
+    fig, ax = plt.subplots(figsize=(12, 2))
+    ax.set_axis_off()
+    ax.set_title(f"{label} Pearson Correlation", fontweight="bold")
+
+    col_lables = []
+    col_lables.extend(all_block_names)
+    table = ax.table(
+        cellText=means,
+        rowLabels=row_labels,
+        colLabels=all_block_names,
+        rowColours=["palegreen"] * len(means),
+        colColours=["palegreen"] * len(means),
         cellLoc="center",
         loc="upper left",
     )

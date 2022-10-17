@@ -10,7 +10,7 @@ from feature_extraction import (
 
 from data_utils import (
     get_sorted_behavior_labels,
-    get_sorted_block_to_data_by_feature,
+    get_sorted_block_to_data_by_marker,
 )
 
 
@@ -31,6 +31,19 @@ EEG_BANDS_NAMES = [
     Feature.BETA1.name,
     Feature.BETA2.name,
     Feature.GAMMA.name,
+]
+
+STAT_FEATURES = [
+    Feature.STD,
+    Feature.PTP,
+    Feature.VAR,
+    Feature.MINIM,
+    Feature.MAXIM,
+    Feature.MEAN_SQUARE,
+    Feature.RMS,
+    Feature.ABS_DIFF,
+    Feature.SKEWNESS,
+    Feature.KURTOSIS,
 ]
 
 
@@ -59,19 +72,17 @@ def divide_chunks(l, n):
         yield l[i : i + n]
 
 
-def get_eeg_spectral_pearson_correlation(
+def get_pearson_correlation_by_feature(
     all_blocks: np.ndarray,
     labels: list,
-    eeg_band: Feature,
+    f: Feature,
     num_channel: int = 128,
     num_blocks: int = 10,
 ):
     pearson_corr = np.zeros((num_channel, num_blocks))
     labels_chunks = list(divide_chunks(labels, num_blocks))
     for ch in range(num_channel):
-        spf = get_feature_by_name(
-            all_blocks=all_blocks, feature_name=eeg_band, channel=ch
-        )
+        spf = get_feature_by_name(all_blocks=all_blocks, feature_name=f, channel=ch)
 
         spf_chunks = list(divide_chunks(spf, num_blocks))
         for i in range(0, num_blocks):
@@ -102,29 +113,36 @@ def get_eeg_features_means(
     return means
 
 
-def get_feature_to_pearson_correlation(all_blocks: np.ndarray, labels: list) -> dict:
+def get_feature_to_pearson_correlation(
+    all_blocks: np.ndarray,
+    labels: list,
+    features: list,
+    num_channel: int = 128,
+) -> dict:
     feature_to_pc = {}
-    for feature_name in EEG_BANDS.keys():
-        feature_to_pc[feature_name] = get_eeg_spectral_pearson_correlation(
-            all_blocks, labels, feature_name
+    for feature_name in features:
+        feature_to_pc[feature_name] = get_pearson_correlation_by_feature(
+            all_blocks, labels, feature_name, num_channel
         )
     return feature_to_pc
 
 
-def get_all_conditions_spectral_feature_to_pc(all_data: dict) -> dict:
+def get_all_conditions_feature_to_pc_by_markers(
+    all_data: dict, marker: str, features: list, num_channel: int = 128
+) -> dict:
     all_block_names = list(all_data.keys())
     all_block_names.sort()
     print(all_block_names)
 
-    all_blocks = get_sorted_block_to_data_by_feature(
-        all_data, EEG.__name__, all_block_names
-    )
+    all_blocks = get_sorted_block_to_data_by_marker(all_data, marker, all_block_names)
 
     condition_to_feature = {}
     for condition in ["valence", "arousal", "attention"]:
         labels = get_sorted_behavior_labels(all_data, condition, all_block_names)
-        feature_to_pc = get_feature_to_pearson_correlation(all_blocks, labels)
+        feature_to_pc = get_feature_to_pearson_correlation(
+            all_blocks, labels, features, num_channel
+        )
         condition_to_feature[condition] = feature_to_pc
-        print(f"Complete computing {condition} spectral features")
+        print(f"Complete computing {condition} features")
 
     return condition_to_feature
