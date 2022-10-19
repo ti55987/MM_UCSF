@@ -77,27 +77,11 @@ def plot_pearson_correlation_table(
     label: str, feature_to_pc: dict, all_block_names: list, k: int = 1
 ):
     means = get_eeg_features_means(feature_to_pc, all_block_names, k)
-    fig, ax = plt.subplots(figsize=(12, 2))
-    ax.set_axis_off()
-    ax.set_title(f"{label} Pearson Correlation", fontweight="bold")
 
     col_lables = []
     col_lables.extend(all_block_names)
     col_lables.append("average")
-    table = ax.table(
-        cellText=means,
-        rowLabels=EEG_BANDS_NAMES,
-        colLabels=col_lables,
-        rowColours=["palegreen"] * 11,
-        colColours=["palegreen"] * 11,
-        cellLoc="center",
-        loc="upper left",
-    )
-
-    table.auto_set_font_size(False)
-    table.set_fontsize(8.5)
-
-    plt.show()
+    _plot_table(f"{label} Pearson Correlation", means, EEG_BANDS_NAMES, col_lables)
 
 
 def plot_pearson_correlation_table_by_features(
@@ -105,27 +89,47 @@ def plot_pearson_correlation_table_by_features(
     feature_to_pc: dict,
     all_block_names: list,
     features: list,
+    channel_num: int = 0,
 ):
-    means = np.zeros((len(features), len(all_block_names)))
+    means = np.zeros((len(features), len(all_block_names) + 1))
     i = 0
     row_labels = []
     for f in features:
         row_labels.append(f.name)
-        means[i] = np.round_(feature_to_pc[f], decimals=3)
+        data = np.round_(feature_to_pc[f][channel_num, :], decimals=3)
+        # means[i] = np.round_(feature_to_pc[f][channel_num, :], decimals=3)
+        avg = np.round_(np.mean(data), decimals=3)
+        data = np.append(data, avg)
+        means[i] = data
         i += 1
-
-    fig, ax = plt.subplots(figsize=(12, 2))
-    ax.set_axis_off()
-    ax.set_title(f"{label} Pearson Correlation", fontweight="bold")
 
     col_lables = []
     col_lables.extend(all_block_names)
+    col_lables.append("average")
+    _plot_table(f"{label} Pearson Correlation", means, row_labels, col_lables)
+
+
+def _plot_table(title: str, cell_values: list, row_labels: list, col_lables: list):
+    fig, ax = plt.subplots(figsize=(12, 2))
+    ax.set_axis_off()
+    ax.set_title(title, fontweight="bold")
+    cellcolours = np.empty_like(cell_values, dtype="object")
+    for i, cl in enumerate(row_labels):
+        for j, _ in enumerate(col_lables):
+            if cell_values[i][j] > 0.5:
+                cellcolours[i, j] = "mistyrose"
+            elif cell_values[i][j] < -0.5:
+                cellcolours[i, j] = "skyblue"
+            else:
+                cellcolours[i, j] = "w"
+
     table = ax.table(
-        cellText=means,
+        cellText=cell_values,
         rowLabels=row_labels,
-        colLabels=all_block_names,
-        rowColours=["palegreen"] * len(means),
-        colColours=["palegreen"] * len(means),
+        colLabels=col_lables,
+        cellColours=cellcolours,
+        rowColours=["palegreen"] * cell_values.shape[0],
+        colColours=["palegreen"] * cell_values.shape[1],
         cellLoc="center",
         loc="upper left",
     )
