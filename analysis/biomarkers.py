@@ -223,6 +223,12 @@ class BioMarkersInterface:
         """Get all the data with key as marker name and data as numpy.array"""
         pass
 
+    def get_chanlocs(self, marker: str) -> list:
+        pass
+
+    def get_times(self, marker: str) -> list:
+        pass
+
     def get_data_field(self, marker):
         if marker == TREV.__name__:
             return "data1"
@@ -245,6 +251,15 @@ class Mat73BioMarkers(BioMarkersInterface):
 
     def get_block_name(self) -> str:
         return getattr(self.marker_to_namedtuple[Behavior.__name__], "block")
+
+    def get_times(self, marker: str) -> list:
+        return getattr(self.marker_to_namedtuple[marker], "times")
+
+    def get_chanlocs(self, marker: str):
+        locs = getattr(self.marker_to_namedtuple[marker], "chanlocs")["labels"]
+        if marker == "EEG":
+            return [l["labels"] for l in locs]
+        return locs["labels"]
 
     def get_all_data(self):
         marker_to_data = {}
@@ -289,6 +304,12 @@ class SIOBioMarkers(BioMarkersInterface):
 
     def get_block_name(self) -> str:
         return self.marker_to_data[Behavior.__name__]["block"].item()[0]
+
+    def get_times(self, marker: str) -> list:
+        return self.marker_to_data[marker]["times"].item()[0]
+
+    def get_chanlocs(self, marker: str):
+        return [i[0][0] for i in self.marker_to_data[marker]["chanlocs"].item()[0]]
 
     def get_all_data(self):
         marker_to_raw_data = {}

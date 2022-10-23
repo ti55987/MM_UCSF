@@ -11,28 +11,34 @@ from biomarkers import (
 from calculate_correlation import (
     EEG_BANDS_NAMES,
     EEG_BANDS_LIST,
-    get_pearson_corr_with_stats_features,
     get_eeg_features_means,
 )
 from feature_extraction import EEG_BANDS, Feature
+from biomarkers import BioMarkersInterface
 
 
-def get_pearson_correlation_series(
-    marker_to_block: dict, markers: list, labels: list, num_channel: int = 1
+def plot_time_series_by_epoch(
+    biomarker: BioMarkersInterface, marker: str, block: str, ch: int
 ):
-    ser_list = []
-    for marker_name in markers:
-        data = marker_to_block[marker_name]
-        for ch in range(num_channel):
-            peaerson_corr, features = get_pearson_corr_with_stats_features(
-                data, labels, ch
-            )
-            ser = pd.Series(data=peaerson_corr, index=features)
+    fig, axes = plt.subplots(
+        13,
+        1,
+        figsize=(10, 30),
+    )
 
-            name = marker_name if num_channel == 1 else f"{marker_name}:{ch}"
-            ser_list.append({"marker_name": name, "value": ser})
+    times = biomarker.get_times(marker)
+    data = biomarker.get_all_data()[marker]
+    channel_name = biomarker.get_chanlocs(marker)[ch]
+    axes[0].set_title(f"{channel_name} {block}")
+    for i in range(data.shape[2]):
+        axes[i].plot(times, data[ch, :, i])
+        axes[i].set_ylabel(f"Epoch {i+1}")
+        if i < data.shape[2] - 1:
+            axes[i].get_xaxis().set_visible(False)
 
-    return ser_list
+    axes[-1].set_xlabel("time (ms)", visible=True)
+
+    plt.show()
 
 
 def get_eeg_pearson_correlation_series_by_block(
@@ -87,41 +93,65 @@ def plot_pearson_correlation_table(
 def plot_pearson_correlation_table_by_features(
     label: str,
     feature_to_pc: dict,
-    all_block_names: list,
+    col_lables: list,
     features: list,
     channel_num: int = 0,
+    with_pr_value: bool = False,
 ):
-    means = np.zeros((len(features), len(all_block_names) + 1))
+    means = np.zeros((len(features), len(col_lables)))
     i = 0
     row_labels = []
     for f in features:
         row_labels.append(f.name)
-        data = np.round_(feature_to_pc[f][channel_num, :], decimals=3)
-        # means[i] = np.round_(feature_to_pc[f][channel_num, :], decimals=3)
-        avg = np.round_(np.mean(data), decimals=3)
-        data = np.append(data, avg)
-        means[i] = data
+        means[i] = np.round_(feature_to_pc[f][channel_num, :], decimals=3)
         i += 1
 
-    col_lables = []
-    col_lables.extend(all_block_names)
-    col_lables.append("average")
-    _plot_table(f"{label} Pearson Correlation", means, row_labels, col_lables)
+    f_width = 2 if with_pr_value else 12
+    _plot_table(
+        f"{label} Pearson Correlation",
+        means,
+        row_labels,
+        col_lables,
+        with_pr_value,
+        f_width,
+    )
 
 
-def _plot_table(title: str, cell_values: list, row_labels: list, col_lables: list):
-    fig, ax = plt.subplots(figsize=(12, 2))
-    ax.set_axis_off()
-    ax.set_title(title, fontweight="bold")
+def _get_pr_colors(cell_values, row_labels, col_lables):
+    cellcolours = np.empty_like(cell_values, dtype="object")
+    for i, cl in enumerate(row_labels):
+        cellcolours[i, 0] = _color_r_value(cell_values[i][0])
+        cellcolours[i, 1] = _color_p_value(cell_values[i][1])
+
+    return cellcolours
+
+
+def _get_r_colors(cell_values, row_labels, col_lables):
     cellcolours = np.empty_like(cell_values, dtype="object")
     for i, cl in enumerate(row_labels):
         for j, _ in enumerate(col_lables):
-            if cell_values[i][j] > 0.5:
-                cellcolours[i, j] = "mistyrose"
-            elif cell_values[i][j] < -0.5:
-                cellcolours[i, j] = "skyblue"
-            else:
-                cellcolours[i, j] = "w"
+            cellcolours[i, j] = _color_r_value(cell_values[i][j])
+
+    return cellcolours
+
+
+def _plot_table(
+    title: str,
+    cell_values: list,
+    row_labels: list,
+    col_lables: list,
+    with_p_value: bool = False,
+    fig_width: int = 12,
+):
+    fig, ax = plt.subplots(figsize=(fig_width, 2))
+    ax.set_axis_off()
+    ax.set_title(title, fontweight="bold")
+
+    cellcolours = (
+        _get_pr_colors(cell_values, row_labels, col_lables)
+        if with_p_value
+        else _get_r_colors(cell_values, row_labels, col_lables)
+    )
 
     table = ax.table(
         cellText=cell_values,
@@ -138,6 +168,19 @@ def _plot_table(title: str, cell_values: list, row_labels: list, col_lables: lis
     table.set_fontsize(8.5)
 
     plt.show()
+
+
+def _color_p_value(value) -> str:
+    return "mistyrose" if value < 0.05 else "w"
+
+
+def _color_r_value(value) -> str:
+    if value > 0.5:
+        return "mistyrose"
+    elif value < -0.5:
+        return "skyblue"
+    else:
+        return "w"
 
 
 def plot_eeg_topomap_one_block(
