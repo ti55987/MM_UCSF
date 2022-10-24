@@ -188,6 +188,7 @@ def get_feature_by_name(
 
         if feature_name in EEG_BANDS.keys():
             eeg_band_fft = get_spectral_power(data, 512)
+            # (TODO) this should be optimized
             val = eeg_band_fft[feature_name]
         else:
             func = FEATURE_TO_FUNC[feature_name]

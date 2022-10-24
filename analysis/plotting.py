@@ -41,22 +41,42 @@ def plot_time_series_by_epoch(
     plt.show()
 
 
-def get_eeg_pearson_correlation_series_by_block(
+def get_eeg_pearson_correlation_series_all_blocks(
     feature_to_pc: np.ndarray,
-    all_block_names: list,
-    block_num: int = 0,
     num_channel: int = 128,
+    k: int = 10,
 ):
+    """Get eeg pd series for plotting.
+
+    Parameters
+    ----------
+    feature_to_pc : map
+        key: feature name
+        value: (num_channels, num_blocks)
+    num_channel : int
+        The number of channels
+    k: int
+        Top k positive and top k negative.
+
+    Returns
+    -------
+    data : array
+        eeg pd series
+    """
     ser_list = []
-    block_name = all_block_names[block_num]
-    index = list(range(1, num_channel + 1, 1))
-    for f in EEG_BANDS_LIST:
-        pearson_corr = feature_to_pc[f][:, block_num]
+    index = EEG_CHANEL_NAMES
+    for f in list(EEG_BANDS.keys()):
+        pearson_corr = np.mean(feature_to_pc[f], axis=1)
         ser = pd.Series(data=pearson_corr, index=index)
+
+        value = ser
+        if k > 0:
+            value = pd.concat([ser.nlargest(int(k / 2)), ser.nsmallest(int(k / 2))])
+
         ser_list.append(
             {
-                "marker_name": f"EEG {f.name} at block {block_name}",
-                "value": pd.concat([ser.nlargest(5), ser.nsmallest(5)]),
+                "marker_name": f"EEG {f.name} Pearson Correlation R value",
+                "value": value,
             }
         )
 
@@ -87,7 +107,7 @@ def plot_pearson_correlation_table(
     col_lables = []
     col_lables.extend(all_block_names)
     col_lables.append("average")
-    _plot_table(f"{label} Pearson Correlation", means, EEG_BANDS_NAMES, col_lables)
+    plot_table(f"{label} Pearson Correlation", means, EEG_BANDS_NAMES, col_lables)
 
 
 def plot_pearson_correlation_table_by_features(
@@ -107,7 +127,7 @@ def plot_pearson_correlation_table_by_features(
         i += 1
 
     f_width = 2 if with_pr_value else 12
-    _plot_table(
+    plot_table(
         f"{label} Pearson Correlation",
         means,
         row_labels,
@@ -135,7 +155,7 @@ def _get_r_colors(cell_values, row_labels, col_lables):
     return cellcolours
 
 
-def _plot_table(
+def plot_table(
     title: str,
     cell_values: list,
     row_labels: list,

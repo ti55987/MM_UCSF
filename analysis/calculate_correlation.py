@@ -5,7 +5,6 @@ from biomarkers import EEG, EMG, EOG
 from feature_extraction import (
     get_feature_by_name,
     Feature,
-    EEG_BANDS,
 )
 
 from data_utils import (
