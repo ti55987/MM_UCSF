@@ -2,6 +2,7 @@ import mat73
 import glob
 import numpy as np
 import scipy.io as sio
+from typing import Tuple
 
 from feature_extraction import (
     concatenate_features,
@@ -134,22 +135,23 @@ def get_sorted_block_to_data_by_marker(
     return all_blocks
 
 
-def concatenate_all_data(dir_to_data: dict) -> tuple(np.ndarray, dict):
+# should not concatenate all data.
+def concatenate_all_data(dir_to_data: dict, marker: str) -> Tuple[np.ndarray, dict]:
     all_participants_data = np.array([])
     condition_to_labels = {"valence": [], "arousal": [], "attention": []}
-    for dir_name, data in dir_to_data.items():
+    for _, data in dir_to_data.items():
         block_names = list(data.keys())
         block_names.sort()
 
-        all_blocks = get_sorted_block_to_data_by_marker(data, marker, block_names)
+        sorted_data = get_sorted_block_to_data_by_marker(data, marker, block_names)
         all_participants_data = (
-            data
+            sorted_data
             if all_participants_data.ndim == 1
-            else np.concatenate((all_participants_data, all_blocks), axis=-1)
+            else np.concatenate((all_participants_data, sorted_data), axis=-1)
         )
 
         for condition, _ in condition_to_labels.items():
-            labels = get_sorted_behavior_labels(all_data, condition, all_block_names)
+            labels = get_sorted_behavior_labels(data, condition, block_names)
             condition_to_labels[condition].extend(labels)
 
     return all_participants_data, condition_to_labels

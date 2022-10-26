@@ -42,19 +42,18 @@ def plot_time_series_by_epoch(
 
 
 def get_eeg_pearson_correlation_series_all_blocks(
-    feature_to_pc: np.ndarray,
-    num_channel: int = 128,
+    feature_to_rp: np.ndarray,
+    channel_names: list,
     k: int = 10,
 ):
     """Get eeg pd series for plotting.
 
     Parameters
     ----------
-    feature_to_pc : map
+    feature_to_rp : map
         key: feature name
-        value: (num_channels, num_blocks)
-    num_channel : int
-        The number of channels
+        value: (num_channels, [R_value, P_value])
+    channel_names: the names of the channel
     k: int
         Top k positive and top k negative.
 
@@ -64,10 +63,9 @@ def get_eeg_pearson_correlation_series_all_blocks(
         eeg pd series
     """
     ser_list = []
-    index = EEG_CHANEL_NAMES
     for f in list(EEG_BANDS.keys()):
-        pearson_corr = np.mean(feature_to_pc[f], axis=1)
-        ser = pd.Series(data=pearson_corr, index=index)
+        pearson_corr = feature_to_rp[f][:, 0]
+        ser = pd.Series(data=pearson_corr, index=channel_names)
 
         value = ser
         if k > 0:
@@ -99,9 +97,23 @@ def plot_series(nrow: int, ncol: int, ser_list):
             count += 1
 
 
-def plot_pearson_correlation_table(
+def plot_eeg_pearson_correlation_table(
     label: str, feature_to_pc: dict, all_block_names: list, k: int = 1
 ):
+    """Plot top k eeg pearson correlation means table
+
+    Parameters
+    ----------
+    label: str
+        The condition
+    feature_to_pc : map
+        key: feature name
+        value: (num_channels, num_blocks)
+    all_block_names: list
+        The names of the blocks
+    k: int
+        Top k positive and top k negative.
+    """
     means = get_eeg_features_means(feature_to_pc, all_block_names, k)
 
     col_lables = []
@@ -110,7 +122,30 @@ def plot_pearson_correlation_table(
     plot_table(f"{label} Pearson Correlation", means, EEG_BANDS_NAMES, col_lables)
 
 
-def plot_pearson_correlation_table_by_features(
+def plot_top_chaneels_by_p_value(
+    feature_to_rp: dict,
+    channel_names: list,
+    features: list,
+    condition: str,
+    k: int = 10,
+):
+    for f in features:
+        top_k_by_r = np.argpartition(feature_to_rp[f][:, 0], -k)[-k:]
+        # bottom_k = np.argpartition(feature_to_rp[f][:, 1], k)[:k]
+        channels = [channel_names[i] for i in top_k_by_r]
+        data = np.take(feature_to_rp[f], top_k_by_r, 0)
+        data = np.round_(data, decimals=3)
+        plot_table(
+            f"{f.name} {condition} Pearson Correlation",
+            data,
+            channels,
+            ["R-Value", "P-Value"],
+            True,
+            2,
+        )
+
+
+def plot_pearson_correlation_table_by_channel(
     label: str,
     feature_to_pc: dict,
     col_lables: list,
@@ -118,6 +153,22 @@ def plot_pearson_correlation_table_by_features(
     channel_num: int = 0,
     with_pr_value: bool = False,
 ):
+    """Plot top k eeg pearson correlation means table
+
+    Parameters
+    ----------
+    label: str
+        The condition
+    feature_to_pc : map
+        key: feature name
+        value: (num_channels, num_blocks) or (num_channels, [r_value, p_value])
+    features: list
+        The names of the features
+    channel_num: int
+        The number of channel
+    with_pr_value: bool
+        If the feature_to_pc contains p values
+    """
     means = np.zeros((len(features), len(col_lables)))
     i = 0
     row_labels = []
@@ -223,14 +274,12 @@ def plot_eeg_topomap_one_block(
         y=1.3,
     )
 
-    _plot_eeg_topomap(
-        feature_to_pc[spectral_feature], all_block_names, axes, num_epochs
-    )
+    plot_eeg_topomap(feature_to_pc[spectral_feature], all_block_names, axes, num_epochs)
 
 
 def plot_eeg_topomap_all_blocks(
     condition: str,
-    feature_to_pc: dict,
+    feature_to_rp: dict,
     num_epochs: int = 130,
 ):
     fig, axes = plt.subplots(
@@ -248,7 +297,7 @@ def plot_eeg_topomap_all_blocks(
     all_block_pc_mean = np.array([])
     for f in list(EEG_BANDS.keys()):
         all_features.append(f.name)
-        pearson_corr = np.mean(feature_to_pc[f], axis=1)
+        pearson_corr = feature_to_rp[f][:, 0]
         all_block_pc_mean = (
             pearson_corr
             if len(all_block_pc_mean) == 0
@@ -257,10 +306,10 @@ def plot_eeg_topomap_all_blocks(
 
     all_block_pc_mean = np.swapaxes(all_block_pc_mean, 0, 1)
 
-    _plot_eeg_topomap(all_block_pc_mean, all_features, axes, num_epochs)
+    plot_eeg_topomap(all_block_pc_mean, all_features, axes, num_epochs)
 
 
-def _plot_eeg_topomap(data, xlables, axes, num_epochs):
+def plot_eeg_topomap(data, xlables, axes, num_epochs):
     for i in range(len(xlables)):
         axes[i].set_xlabel(xlables[i], fontsize=25)
         axes[i].xaxis.set_label_position("top")

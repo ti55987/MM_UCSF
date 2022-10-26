@@ -96,6 +96,22 @@ def _get_all_blocks_pearson_correlation_by_feature(
 def get_eeg_features_means(
     feature_to_pc: np.ndarray, all_block_names: list, k: int = 1
 ):
+    """Get top k eeg pearson correlation means
+
+    Parameters
+    ----------
+    feature_to_pc : map
+        key: feature name
+        value: (num_channels, num_blocks)
+    all_block_names: the names of the blocks
+    k: int
+        Top k positive and top k negative.
+
+    Returns
+    -------
+    data : array
+        eeg top k channel pearson correlation means
+    """
     means = np.zeros((len(EEG_BANDS_LIST), len(all_block_names) + 1))
     i = 0
     for f in EEG_BANDS_LIST:
