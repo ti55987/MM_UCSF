@@ -1,4 +1,7 @@
+from collections import defaultdict
+
 import numpy as np
+from scipy.stats import combine_pvalues
 from scipy.stats import kendalltau, pearsonr, spearmanr
 
 from biomarkers import EEG, EMG, EOG
@@ -145,7 +148,7 @@ def get_feature_to_pearson_correlation(
     return feature_to_pc
 
 
-def get_all_conditions_feature_to_pc_by_markers(
+def get_all_behaviors_feature_to_pc_by_markers(
     all_data: dict,
     marker: str,
     features: list,
@@ -165,6 +168,46 @@ def get_all_conditions_feature_to_pc_by_markers(
             all_blocks, labels, features, num_channel, num_blocks
         )
         condition_to_feature[condition] = feature_to_pc
-        print(f"Complete computing {condition} features")
+        print(f"Complete computing {condition} features correlation")
 
     return condition_to_feature
+
+
+def get_all_trials_average_rp_values(
+    dir_name_to_cf: dict,
+    features: list,
+):
+    """Get average r values and combined p values with Fisher's method
+
+    Parameters
+    ----------
+    dir_name_to_cf : a map
+        key: dir name
+        value: map[behavior]: (map[feature]: (num_channel, [r_value, p_value])
+    features: list of features
+    Returns
+    -------
+    behavior_to_avg_rp : map
+        key: behavior name
+        value: map[feature]: (num_channel, [r_value, p_value])
+    """
+    behavior_to_avg_rp = defaultdict()
+    all_dirs = list(dir_name_to_cf.keys())
+    for behavior in ["valence", "arousal", "attention"]:
+        behavior_to_avg_rp[behavior] = defaultdict()
+        for f in features:
+            all_rv = np.asarray(
+                [dir_name_to_cf[dir_name][behavior][f][:, 0] for dir_name in all_dirs]
+            )
+            all_pv = np.asarray(
+                [dir_name_to_cf[dir_name][behavior][f][:, 1] for dir_name in all_dirs]
+            )
+            all_pv = np.swapaxes(all_pv, 0, -1)
+
+            combined_pv = [np.round_(combine_pvalues(p)[1], decimals=3) for p in all_pv]
+            mean_rv = np.round_(np.mean(all_rv, axis=0), decimals=3)
+            behavior_to_avg_rp[behavior][f] = np.swapaxes(
+                np.asarray([mean_rv, combined_pv]), 0, -1
+            )
+
+    return behavior_to_avg_rp

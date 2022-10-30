@@ -10,7 +10,6 @@ from biomarkers import (
 )
 from calculate_correlation import (
     EEG_BANDS_NAMES,
-    EEG_BANDS_LIST,
     get_eeg_features_means,
 )
 from feature_extraction import EEG_BANDS, Feature
@@ -122,21 +121,26 @@ def plot_eeg_pearson_correlation_table(
     plot_table(f"{label} Pearson Correlation", means, EEG_BANDS_NAMES, col_lables)
 
 
-def plot_top_chaneels_by_p_value(
+def plot_k_chaneels_by_r_value(
     feature_to_rp: dict,
     channel_names: list,
     features: list,
     condition: str,
+    is_top: bool = True,
     k: int = 10,
 ):
     for f in features:
-        top_k_by_r = np.argpartition(feature_to_rp[f][:, 0], -k)[-k:]
-        # bottom_k = np.argpartition(feature_to_rp[f][:, 1], k)[:k]
-        channels = [channel_names[i] for i in top_k_by_r]
-        data = np.take(feature_to_rp[f], top_k_by_r, 0)
+        k_by_r = np.argpartition(feature_to_rp[f][:, 0], -k)[-k:]
+        title = f"Top {k} {f.name} {condition} Pearson Correlation"
+        if not is_top:
+            k_by_r = np.argpartition(feature_to_rp[f][:, 0], k)[:k]
+            title = f"Bottom {k} {f.name} {condition} Pearson Correlation"
+
+        channels = [channel_names[i] for i in k_by_r]
+        data = np.take(feature_to_rp[f], k_by_r, 0)
         data = np.round_(data, decimals=3)
         plot_table(
-            f"{f.name} {condition} Pearson Correlation",
+            title,
             data,
             channels,
             ["R-Value", "P-Value"],
@@ -153,7 +157,7 @@ def plot_pearson_correlation_table_by_channel(
     channel_num: int = 0,
     with_pr_value: bool = False,
 ):
-    """Plot top k eeg pearson correlation means table
+    """Plot pearson correlation means table
 
     Parameters
     ----------
