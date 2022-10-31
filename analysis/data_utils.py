@@ -6,6 +6,7 @@ from typing import Tuple
 
 from feature_extraction import (
     concatenate_features,
+    get_all_blocks_features_by_channel,
     process_spectral_power_for_channels,
 )
 from biomarkers import SIOBioMarkers, Mat73BioMarkers, BioMarkersInterface, EEG
@@ -89,24 +90,31 @@ def get_features_in_block(marker_to_data: dict) -> np.array:
     return all_features
 
 
-def get_features_in_all_blocks(all_blocks: dict) -> np.array:
-    all_blocks_features = []
-    for block_name, markers in all_blocks.items():
-        marker_to_data = markers.get_all_data()
-        block_features = get_features_in_block(marker_to_data)
-        print(f"{block_name} block has features: {block_features.shape}...")
-        all_blocks_features.append(block_features)
-    return np.concatenate(all_blocks_features)
+def get_all_features_by_marker(
+    all_data: dict,
+    marker: str,
+    features: list,
+    channel_num: int = 0,
+) -> dict:
+    all_block_names = list(all_data.keys())
+    all_block_names.sort()
+
+    all_blocks = get_sorted_block_to_data_by_marker(all_data, marker, all_block_names)
+
+    return get_all_blocks_features_by_channel(all_blocks, features, channel_num)
 
 
-def get_behavior_labels(all_data, label_name):
-    all_labels = np.array([])
-    for block, markers in all_data.items():
-        y = markers.get_labels(label_name)
-        all_labels = np.concatenate((all_labels, y), axis=None)
+def get_all_behaviors_labels(
+    all_data: dict,
+) -> dict:
+    all_block_names = list(all_data.keys())
+    all_block_names.sort()
 
-    print(f"All labels shape: {all_labels.shape}")
-    return all_labels
+    behavior_to_labels = {}
+    for b in ["valence", "arousal", "attention"]:
+        behavior_to_labels[b] = get_sorted_behavior_labels(all_data, b, all_block_names)
+
+    return behavior_to_labels
 
 
 def get_sorted_behavior_labels(all_data, label_name, sorted_blocks: list):

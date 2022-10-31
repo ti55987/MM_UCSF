@@ -267,8 +267,17 @@ class Mat73BioMarkers(BioMarkersInterface):
             if marker == Behavior.__name__:
                 continue
 
-            field_name = self.get_data_field(marker)
-            marker_to_data[marker] = np.array(getattr(data, field_name))
+            if marker == BP.__name__:
+                marker_to_data[marker] = np.stack(
+                    (
+                        np.array(getattr(data, "systolic")),
+                        np.array(getattr(data, "diastolic")),
+                    ),
+                )
+            else:
+                field_name = self.get_data_field(marker)
+                marker_to_data[marker] = np.array(getattr(data, field_name))
+
         return marker_to_data
 
     def get_data(self, marker_name):
@@ -317,6 +326,11 @@ class SIOBioMarkers(BioMarkersInterface):
             if marker == Behavior.__name__:
                 continue
 
-            field_name = self.get_data_field(marker)
-            marker_to_raw_data[marker] = data[field_name].item()
+            if marker == BP.__name__:
+                marker_to_raw_data[marker] = np.concatenate(
+                    (data["systolic"].item(), data["diastolic"].item()), axis=0
+                )
+            else:
+                field_name = self.get_data_field(marker)
+                marker_to_raw_data[marker] = data[field_name].item()
         return marker_to_raw_data

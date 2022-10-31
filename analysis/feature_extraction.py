@@ -2,11 +2,6 @@ from scipy import stats
 import numpy as np
 from enum import Enum
 
-from data_utils import (
-    get_sorted_behavior_labels,
-    get_sorted_block_to_data_by_marker,
-)
-
 
 class Feature(Enum):
     DELTA = 1
@@ -215,37 +210,3 @@ def get_all_blocks_features_by_channel(
             all_blocks=all_blocks, feature_name=feature_name, channel=channel_num
         )
     return name_to_features
-
-
-def get_all_behaviors_features_by_markers(
-    all_data: dict,
-    marker: str,
-    features: list,
-    channel_num: int = 0,
-) -> dict:
-    all_block_names = list(all_data.keys())
-    all_block_names.sort()
-
-    all_blocks = get_sorted_block_to_data_by_marker(all_data, marker, all_block_names)
-
-    behavior_to_feature = {}
-    for b in ["valence", "arousal", "attention"]:
-        behavior_to_feature[b] = get_all_blocks_features_by_channel(
-            all_blocks, features, channel_num
-        )
-        print(f"Complete computing {b} features")
-
-    return behavior_to_feature
-
-
-def get_all_behaviors_labels(
-    all_data: dict,
-) -> dict:
-    all_block_names = list(all_data.keys())
-    all_block_names.sort()
-
-    behavior_to_labels = {}
-    for b in ["valence", "arousal", "attention"]:
-        behavior_to_labels[b] = get_sorted_behavior_labels(all_data, b, all_block_names)
-
-    return behavior_to_labels
