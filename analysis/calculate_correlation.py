@@ -4,7 +4,7 @@ import numpy as np
 from scipy.stats import combine_pvalues
 from scipy.stats import kendalltau, pearsonr, spearmanr
 
-from biomarkers import EEG, EMG, EOG
+from biomarkers import EEG, EMG, EOG, BEHAVIOR_LIST
 from feature_extraction import (
     get_feature_by_name,
     Feature,
@@ -15,8 +15,6 @@ from data_utils import (
     get_sorted_block_to_data_by_marker,
 )
 
-
-MULTIPLE_CHANNELS_SIGNAL = [EEG.__name__, EMG.__name__, EOG.__name__]
 EEG_BANDS_LIST = [
     Feature.DELTA,
     Feature.THETA,
@@ -56,7 +54,7 @@ def divide_chunks(l, n):
         yield l[i : i + n]
 
 
-def get_pearson_correlation_by_feature(
+def get_correlation_by_feature(
     all_blocks: np.ndarray,
     labels: list,
     f: Feature,
@@ -65,7 +63,7 @@ def get_pearson_correlation_by_feature(
 ):
     # calculate all blocks
     if num_blocks == 0:
-        return _get_all_blocks_pearson_correlation_by_feature(
+        return _get_all_blocks_correlation_by_feature(
             all_blocks, labels, f, num_channel
         )
 
@@ -82,18 +80,20 @@ def get_pearson_correlation_by_feature(
     return pearson_corr
 
 
-def _get_all_blocks_pearson_correlation_by_feature(
+def _get_all_blocks_correlation_by_feature(
     all_blocks: np.ndarray,
     labels: list,
     f: Feature,
     num_channel: int = 128,
 ):
     pearson_corr = np.zeros((num_channel, 2))
+    spearman_corr = np.zeros((num_channel, 2))
     for ch in range(num_channel):
         spf = get_feature_by_name(all_blocks=all_blocks, feature_name=f, channel=ch)
-        res = pearsonr(spf, labels)
-        pearson_corr[ch] = res
-    return pearson_corr
+        spearman_corr[ch] = spearmanr(spf, labels)
+        pearson_corr[ch] = pearsonr(spf, labels)
+
+    return {"pearson": pearson_corr, "spearman": spearman_corr}
 
 
 def get_eeg_features_means(
@@ -133,7 +133,7 @@ def get_eeg_features_means(
     return means
 
 
-def get_feature_to_pearson_correlation(
+def get_feature_to_correlation(
     all_blocks: np.ndarray,
     labels: list,
     features: list,
@@ -142,7 +142,7 @@ def get_feature_to_pearson_correlation(
 ) -> dict:
     feature_to_pc = {}
     for feature_name in features:
-        feature_to_pc[feature_name] = get_pearson_correlation_by_feature(
+        feature_to_pc[feature_name] = get_correlation_by_feature(
             all_blocks, labels, feature_name, num_channel, num_blocks
         )
     return feature_to_pc
@@ -162,9 +162,9 @@ def get_all_behaviors_feature_to_pc_by_markers(
     all_blocks = get_sorted_block_to_data_by_marker(all_data, marker, all_block_names)
 
     condition_to_feature = {}
-    for condition in ["valence", "arousal", "attention"]:
+    for condition in BEHAVIOR_LIST:
         labels = get_sorted_behavior_labels(all_data, condition, all_block_names)
-        feature_to_pc = get_feature_to_pearson_correlation(
+        feature_to_pc = get_feature_to_correlation(
             all_blocks, labels, features, num_channel, num_blocks
         )
         condition_to_feature[condition] = feature_to_pc
@@ -176,6 +176,7 @@ def get_all_behaviors_feature_to_pc_by_markers(
 def get_all_trials_average_rp_values(
     dir_name_to_cf: dict,
     features: list,
+    corr_name: str,
 ):
     """Get average r values and combined p values with Fisher's method
 
@@ -183,7 +184,8 @@ def get_all_trials_average_rp_values(
     ----------
     dir_name_to_cf : a map
         key: dir name
-        value: map[behavior]: (map[feature]: (num_channel, [r_value, p_value])
+        value: map[behavior]: (
+                map[feature]: {"pearson": (num_channel, [r_value, p_value]), "spearman": (num_channel, [r_value, p_value])}
     features: list of features
     Returns
     -------
@@ -193,14 +195,20 @@ def get_all_trials_average_rp_values(
     """
     behavior_to_avg_rp = defaultdict()
     all_dirs = list(dir_name_to_cf.keys())
-    for behavior in ["valence", "arousal", "attention"]:
+    for behavior in BEHAVIOR_LIST:
         behavior_to_avg_rp[behavior] = defaultdict()
         for f in features:
             all_rv = np.asarray(
-                [dir_name_to_cf[dir_name][behavior][f][:, 0] for dir_name in all_dirs]
+                [
+                    dir_name_to_cf[dir_name][behavior][f][corr_name][:, 0]
+                    for dir_name in all_dirs
+                ]
             )
             all_pv = np.asarray(
-                [dir_name_to_cf[dir_name][behavior][f][:, 1] for dir_name in all_dirs]
+                [
+                    dir_name_to_cf[dir_name][behavior][f][corr_name][:, 1]
+                    for dir_name in all_dirs
+                ]
             )
             all_pv = np.swapaxes(all_pv, 0, -1)
 

@@ -149,7 +149,7 @@ def plot_k_chaneels_by_r_value(
         )
 
 
-def plot_pearson_correlation_table_by_channel(
+def plot_correlation_table_by_channel(
     label: str,
     feature_to_pc: dict,
     col_lables: list,
@@ -181,9 +181,9 @@ def plot_pearson_correlation_table_by_channel(
         means[i] = np.round_(feature_to_pc[f][channel_num, :], decimals=3)
         i += 1
 
-    f_width = 2 if with_pr_value else 12
+    f_width = 4 if with_pr_value else 12
     plot_table(
-        f"{label} Pearson Correlation",
+        f"{label} Correlation",
         means,
         row_labels,
         col_lables,
@@ -197,6 +197,8 @@ def _get_pr_colors(cell_values, row_labels, col_lables):
     for i, cl in enumerate(row_labels):
         cellcolours[i, 0] = _color_r_value(cell_values[i][0])
         cellcolours[i, 1] = _color_p_value(cell_values[i][1])
+        cellcolours[i, 2] = _color_r_value(cell_values[i][2])
+        cellcolours[i, 3] = _color_p_value(cell_values[i][3])
 
     return cellcolours
 

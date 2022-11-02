@@ -209,6 +209,8 @@ ALL_MARKERS = [
     Behavior.__name__,
 ]
 
+BEHAVIOR_LIST = ["valence", "arousal", "attention"]
+
 
 class BioMarkersInterface:
     def get_labels(self, name="valence"):
@@ -274,6 +276,15 @@ class Mat73BioMarkers(BioMarkersInterface):
                         np.array(getattr(data, "diastolic")),
                     ),
                 )
+            elif marker == ECG.__name__:
+                marker_to_data[marker] = np.stack(
+                    (
+                        np.array(getattr(data, "HF")),
+                        np.array(getattr(data, "LF")),
+                        np.array(getattr(data, "LFHFratio")),
+                        np.array(getattr(data, "avgHR")),
+                    ),
+                )
             else:
                 field_name = self.get_data_field(marker)
                 marker_to_data[marker] = np.array(getattr(data, field_name))
@@ -318,6 +329,11 @@ class SIOBioMarkers(BioMarkersInterface):
         return self.marker_to_data[marker]["times"].item()[0]
 
     def get_chanlocs(self, marker: str):
+        if marker == BP.__name__:
+            return ["Systolic", "Diastolic"]
+        elif marker == ECG.__name__:
+            return ["HF", "LF", "LFHFratio", "avgHR"]
+
         return [i[0][0] for i in self.marker_to_data[marker]["chanlocs"].item()[0]]
 
     def get_all_data(self):
@@ -329,6 +345,16 @@ class SIOBioMarkers(BioMarkersInterface):
             if marker == BP.__name__:
                 marker_to_raw_data[marker] = np.concatenate(
                     (data["systolic"].item(), data["diastolic"].item()), axis=0
+                )
+            elif marker == ECG.__name__:
+                marker_to_raw_data[marker] = np.concatenate(
+                    (
+                        data["HF"].item(),
+                        data["LF"].item(),
+                        data["LFHFratio"].item(),
+                        data["avgHR"].item(),
+                    ),
+                    axis=0,
                 )
             else:
                 field_name = self.get_data_field(marker)
