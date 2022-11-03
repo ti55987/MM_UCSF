@@ -1,3 +1,5 @@
+from collections import defaultdict
+
 import mat73
 import glob
 import numpy as np
@@ -142,6 +144,38 @@ def get_sorted_block_to_data_by_marker(
 
     return all_blocks
 
+def extract_labels(dir_to_data: dict):
+    dir_name_to_labels = {}
+    for dir_name, all_data in dir_to_data.items():
+        dir_name_to_labels[dir_name] = get_all_behaviors_labels(all_data)
+
+    return dir_name_to_labels
+
+def extract_features_by_channel(marker: str, dir_to_data: dict, features: list, channel_num: int):
+    dir_name_to_features = {}
+    dir_name_to_labels = {}
+    for dir_name, all_data in dir_to_data.items():
+        feature_to_value = get_all_features_by_marker(
+            all_data, marker, features, channel_num
+        )
+
+        dir_name_to_features[dir_name] = feature_to_value
+        dir_name_to_labels[dir_name] = get_all_behaviors_labels(all_data)
+
+    features_to_trials = defaultdict()
+    all_data = dir_to_data["../2000_CleanData"]
+    channel_name = all_data["audio_hvla"].get_chanlocs(marker)[channel_num]
+
+    for dir_name, fv in dir_name_to_features.items():
+        for f, v in fv.items():
+            key = f'{channel_name}_{f.name}'
+            if key not in features_to_trials:
+                features_to_trials[key] = defaultdict()
+            if dir_name not in features_to_trials[f]:
+                features_to_trials[key][dir_name] = defaultdict()
+
+            features_to_trials[key][dir_name] = v
+    return features_to_trials
 
 # should not concatenate all data.
 def concatenate_all_data(dir_to_data: dict, marker: str) -> Tuple[np.ndarray, dict]:

@@ -258,6 +258,11 @@ class Mat73BioMarkers(BioMarkersInterface):
         return getattr(self.marker_to_namedtuple[marker], "times")
 
     def get_chanlocs(self, marker: str):
+        if marker == BP.__name__:
+            return ["Systolic", "Diastolic"]
+        elif marker == ECG.__name__:
+            return ["HF", "LF", "LFHFratio", "avgHR"]
+
         locs = getattr(self.marker_to_namedtuple[marker], "chanlocs")["labels"]
         if marker == "EEG":
             return [l["labels"] for l in locs]

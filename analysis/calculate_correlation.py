@@ -4,7 +4,7 @@ import numpy as np
 from scipy.stats import combine_pvalues
 from scipy.stats import kendalltau, pearsonr, spearmanr
 
-from biomarkers import EEG, EMG, EOG, BEHAVIOR_LIST
+from biomarkers import BEHAVIOR_LIST
 from feature_extraction import (
     get_feature_by_name,
     Feature,

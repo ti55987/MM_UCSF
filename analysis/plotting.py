@@ -7,6 +7,7 @@ from biomarkers import (
     EEG_CHANEL_NAMES,
     EEG_NUM_CHANNELS,
     EEG_MONTAGES,
+    BEHAVIOR_LIST,
 )
 from calculate_correlation import (
     EEG_BANDS_NAMES,
@@ -39,6 +40,33 @@ def plot_time_series_by_epoch(
 
     plt.show()
 
+def plot_scatter_by_marker(marker: str, features_to_trials: dict, dir_name_to_labels: dict, data_name: str):
+    colors = ["b", "c", "y", "m", "r"]
+    for b in BEHAVIOR_LIST:
+        fig, axes = plt.subplots(nrows=2, ncols=5, figsize=(20, 7))
+        fig.suptitle(
+            f"{marker} {data_name} features vs {b}", fontsize=14, y=1
+        )
+
+        fidx = 0
+        r, c = 0, 0
+        for f, trials in features_to_trials.items():
+            cidx = 0
+            r = int(fidx % 2)
+            c = int(fidx / 2)
+            for trial, val in trials.items():
+                trial_name = trial.strip("../_CleanData")
+                labels = dir_name_to_labels[trial][b]
+                axes[r][c].scatter(
+                    val, labels, c=colors[cidx], label=trial_name, alpha=0.3
+                )  # norm=mpl.colors.Normalize(vmin=0, vmax=2)
+                axes[r][c].set_xlabel(f.name, fontsize=10)
+                cidx += 1
+
+            axes[r][c].legend()
+            fidx += 1
+
+        plt.show()
 
 def get_eeg_pearson_correlation_series_all_blocks(
     feature_to_rp: np.ndarray,
