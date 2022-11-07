@@ -16,7 +16,9 @@ dependencies:
   - Oct2py
   - pip=21.1.2
   - pip:
+    - tensorflow
     - sentencepiece
+    - shap
     - mne
     - jupyter_contrib_nbextensions
     - biosppy

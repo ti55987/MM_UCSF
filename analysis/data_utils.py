@@ -153,14 +153,12 @@ def extract_labels(dir_to_data: dict):
 
 def extract_features_by_channel(marker: str, dir_to_data: dict, features: list, channel_num: int):
     dir_name_to_features = {}
-    dir_name_to_labels = {}
     for dir_name, all_data in dir_to_data.items():
         feature_to_value = get_all_features_by_marker(
             all_data, marker, features, channel_num
         )
 
         dir_name_to_features[dir_name] = feature_to_value
-        dir_name_to_labels[dir_name] = get_all_behaviors_labels(all_data)
 
     features_to_trials = defaultdict()
     all_data = dir_to_data["../2000_CleanData"]
@@ -186,6 +184,7 @@ def concatenate_all_data(dir_to_data: dict, marker: str) -> Tuple[np.ndarray, di
         block_names.sort()
 
         sorted_data = get_sorted_block_to_data_by_marker(data, marker, block_names)
+        sorted_data = np.expand_dims(sorted_data, axis=0) if sorted_data.ndim == 2 else sorted_data
         all_participants_data = (
             sorted_data
             if all_participants_data.ndim == 1
