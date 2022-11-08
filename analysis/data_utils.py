@@ -169,7 +169,7 @@ def extract_features_by_channel(marker: str, dir_to_data: dict, features: list, 
             key = f'{channel_name}_{f.name}'
             if key not in features_to_trials:
                 features_to_trials[key] = defaultdict()
-            if dir_name not in features_to_trials[f]:
+            if dir_name not in features_to_trials[key]:
                 features_to_trials[key][dir_name] = defaultdict()
 
             features_to_trials[key][dir_name] = v
