@@ -11,7 +11,9 @@ from feature_extraction import (
     get_all_blocks_features_by_channel,
     process_spectral_power_for_channels,
 )
-from biomarkers import SIOBioMarkers, Mat73BioMarkers, BioMarkersInterface, EEG
+from biomarkers import BEHAVIOR_LIST, SIOBioMarkers, Mat73BioMarkers, BioMarkersInterface, EEG
+
+ALL_DIRS = ["../2000_CleanData", "../2001_CleanData", "../1004_CleanData"]
 
 
 def load_data_from_file(file_name: str) -> BioMarkersInterface:
@@ -113,7 +115,7 @@ def get_all_behaviors_labels(
     all_block_names.sort()
 
     behavior_to_labels = {}
-    for b in ["valence", "arousal", "attention"]:
+    for b in BEHAVIOR_LIST:
         behavior_to_labels[b] = get_sorted_behavior_labels(all_data, b, all_block_names)
 
     return behavior_to_labels
@@ -144,13 +146,6 @@ def get_sorted_block_to_data_by_marker(
 
     return all_blocks
 
-def extract_labels(dir_to_data: dict):
-    dir_name_to_labels = {}
-    for dir_name, all_data in dir_to_data.items():
-        dir_name_to_labels[dir_name] = get_all_behaviors_labels(all_data)
-
-    return dir_name_to_labels
-
 def extract_features_by_channel(marker: str, dir_to_data: dict, features: list, channel_num: int):
     dir_name_to_features = {}
     for dir_name, all_data in dir_to_data.items():
@@ -174,6 +169,85 @@ def extract_features_by_channel(marker: str, dir_to_data: dict, features: list, 
 
             features_to_trials[key][dir_name] = v
     return features_to_trials
+
+def extract_labels(dir_to_data: dict, all_dir: list=ALL_DIRS):
+    """Get labels
+
+    Parameters
+    ----------
+    dir_to_data: dict
+        the key is dir name and the data is the biomarkers
+    all_dir: list
+        the list of trials
+    Returns
+    -------
+    behavior_to_label_array : dict
+        key: behavior
+        value: (num_labels)
+    """
+    behavior_to_label_array = {"valence": [], "arousal": [], "attention": []}
+    for dir_name in all_dir:
+        all_data = dir_to_data[dir_name]
+        b_to_l = get_all_behaviors_labels(all_data)
+        for b, labels in b_to_l.items():
+            behavior_to_label_array[b].append(labels)
+
+    behavior_to_label_array = {b: np.concatenate(labels) for b, labels in behavior_to_label_array.items()}
+    return behavior_to_label_array
+
+def extract_features(marker: str, dir_to_data: dict, features: list, all_dir: list=ALL_DIRS):
+    """Get a marker's features.
+
+    Parameters
+    ----------
+    marker : str
+    dir_to_data: dict
+        the key is dir name and the data is the biomarkers
+    features: list
+        the list of features
+    Returns
+    -------
+    f_array : (num_trials, num_features) e.g (130, 10)
+    feature_names: the list of feature names e.g. VEOG_STD
+    """
+    all_channels = dir_to_data[all_dir[0]]["audio_hvla"].get_chanlocs(marker)
+    all_features_array = []
+    for dir_name in all_dir:
+        all_data = dir_to_data[dir_name]
+        f_array = []
+        for i, ch in enumerate(all_channels):
+            feature_to_value = get_all_features_by_marker(
+                all_data, marker, features, i
+            ) # feature_to_value: feature_name to num_blocks_values
+
+            f_array.append(_get_feature_values(feature_to_value, features))
+
+        all_features_array.append(np.concatenate(f_array, axis=0))
+
+    all_features_array = np.concatenate(all_features_array, axis=-1)
+
+    feature_names = []
+    for i, ch in enumerate(all_channels):
+        f_names = [f'{ch}_{f.name}' for f in features]
+        feature_names.extend(f_names)
+
+    return np.swapaxes(all_features_array, 0, -1), feature_names
+
+def _get_feature_values(features_to_trials: dict, features: list):
+    """Get a marker's features.
+
+    Parameters
+    ----------
+    features_to_trials: dict
+        the key is feature name and the data is the feature values of all blocks
+    features: list
+        the list of features
+    Returns
+    -------
+    f_array : (num_features, num_trials) e.g (10, 130)
+    """
+    f_array = [features_to_trials[f] for f in features]
+    return np.array(f_array)
 
 # should not concatenate all data.
 def concatenate_all_data(dir_to_data: dict, marker: str) -> Tuple[np.ndarray, dict]:
