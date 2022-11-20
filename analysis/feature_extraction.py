@@ -113,6 +113,8 @@ FEATURE_TO_FUNC = {
     Feature.KURTOSIS: kurtosis,
 }
 
+STAT_FEATURES = FEATURE_TO_FUNC.keys()
+
 
 # get_frequency_idx returns the indexes given the frequency bands
 def get_frequency_idx(sz, srate):
@@ -197,6 +199,31 @@ def get_feature_by_name(
         all_blocks_features.append(val)
 
     return all_blocks_features
+
+
+def get_mean_spectral_power_features(
+    all_blocks: np.ndarray,
+    channel: int = 0,
+):
+    print(f"Extracting PSD features for {channel}...")
+
+    name_to_features = {}
+    all_epoch_data = np.swapaxes(
+        all_blocks, 0, -1
+    )  # (num_channels, num_data_points, num_epochs) => (num_epochs, num_data_points, num_channels)
+
+    for data in all_epoch_data:
+        if data.ndim > 1:
+            data = data[:, channel]
+
+        eeg_band_fft = get_spectral_power(data, 512)
+        for f in EEG_BANDS.keys():
+            if f not in name_to_features:
+                name_to_features[f] = []
+
+            name_to_features[f].append(eeg_band_fft[f])
+
+    return name_to_features
 
 
 def get_all_blocks_features_by_channel(

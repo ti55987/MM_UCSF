@@ -7,11 +7,19 @@ import scipy.io as sio
 from typing import Tuple
 
 from feature_extraction import (
+    STAT_FEATURES,
     concatenate_features,
     get_all_blocks_features_by_channel,
+    get_mean_spectral_power_features,
     process_spectral_power_for_channels,
 )
-from biomarkers import BEHAVIOR_LIST, SIOBioMarkers, Mat73BioMarkers, BioMarkersInterface, EEG
+from biomarkers import (
+    BEHAVIOR_LIST,
+    SIOBioMarkers,
+    Mat73BioMarkers,
+    BioMarkersInterface,
+    EEG,
+)
 
 ALL_DIRS = ["../2000_CleanData", "../2001_CleanData", "../1004_CleanData"]
 
@@ -20,25 +28,22 @@ def load_data_from_file(file_name: str) -> BioMarkersInterface:
     try:
         raw_data = mat73.loadmat(file_name)
         signal = raw_data["Signal"]
-
-        print(f"Complete loading {len(signal)} markers")
         return Mat73BioMarkers(signal)
     except Exception as ex:
         raw_data = sio.loadmat(file_name)
         signal = raw_data["Signal"]
-
-        print(f"Complete loading {len(signal.dtype)} markers")
         return SIOBioMarkers(signal)
 
 
 def load_data_from_dir(dir_name: str) -> dict:
+    print(f"Loading {dir_name} data...")
+
     # All files and directories ending with .mat and that don't begin with a dot:
     all_files = glob.glob(dir_name + "/*.mat")
     all_data = {}
     for f in all_files:
         markers = load_data_from_file(f)
         block_name = markers.get_block_name()
-        print(f"Loaded {markers.get_block_name()} block")
         all_data[block_name] = markers
 
     return all_data
@@ -104,8 +109,11 @@ def get_all_features_by_marker(
     all_block_names.sort()
 
     all_blocks = get_sorted_block_to_data_by_marker(all_data, marker, all_block_names)
-
-    return get_all_blocks_features_by_channel(all_blocks, features, channel_num)
+    return (
+        get_mean_spectral_power_features(all_blocks, channel_num)
+        if marker == EEG.__name__
+        else get_all_blocks_features_by_channel(all_blocks, features, channel_num)
+    )
 
 
 def get_all_behaviors_labels(
@@ -127,7 +135,6 @@ def get_sorted_behavior_labels(all_data, label_name, sorted_blocks: list):
         y = all_data[block].get_labels(label_name)
         all_labels = np.concatenate((all_labels, y), axis=None)
 
-    print(f"All labels shape: {all_labels.shape}")
     return all_labels
 
 
@@ -146,7 +153,10 @@ def get_sorted_block_to_data_by_marker(
 
     return all_blocks
 
-def extract_features_by_channel(marker: str, dir_to_data: dict, features: list, channel_num: int):
+
+def extract_features_by_channel(
+    marker: str, dir_to_data: dict, features: list, channel_num: int
+):
     dir_name_to_features = {}
     for dir_name, all_data in dir_to_data.items():
         feature_to_value = get_all_features_by_marker(
@@ -161,7 +171,7 @@ def extract_features_by_channel(marker: str, dir_to_data: dict, features: list, 
 
     for dir_name, fv in dir_name_to_features.items():
         for f, v in fv.items():
-            key = f'{channel_name}_{f.name}'
+            key = f"{channel_name}_{f.name}"
             if key not in features_to_trials:
                 features_to_trials[key] = defaultdict()
             if dir_name not in features_to_trials[key]:
@@ -170,7 +180,8 @@ def extract_features_by_channel(marker: str, dir_to_data: dict, features: list, 
             features_to_trials[key][dir_name] = v
     return features_to_trials
 
-def extract_labels(dir_to_data: dict, all_dir: list=ALL_DIRS):
+
+def extract_labels(dir_to_data: dict, all_dir: list = ALL_DIRS):
     """Get labels
 
     Parameters
@@ -192,10 +203,18 @@ def extract_labels(dir_to_data: dict, all_dir: list=ALL_DIRS):
         for b, labels in b_to_l.items():
             behavior_to_label_array[b].append(labels)
 
-    behavior_to_label_array = {b: np.concatenate(labels) for b, labels in behavior_to_label_array.items()}
+    behavior_to_label_array = {
+        b: np.concatenate(labels) for b, labels in behavior_to_label_array.items()
+    }
     return behavior_to_label_array
 
-def extract_features(marker: str, dir_to_data: dict, features: list, all_dir: list=ALL_DIRS):
+
+def extract_features(
+    marker: str,
+    dir_to_data: dict,
+    features: list = STAT_FEATURES,
+    all_dir: list = ALL_DIRS,
+):
     """Get a marker's features.
 
     Parameters
@@ -218,7 +237,7 @@ def extract_features(marker: str, dir_to_data: dict, features: list, all_dir: li
         for i, ch in enumerate(all_channels):
             feature_to_value = get_all_features_by_marker(
                 all_data, marker, features, i
-            ) # feature_to_value: feature_name to num_blocks_values
+            )  # feature_to_value: feature_name to num_blocks_values
 
             f_array.append(_get_feature_values(feature_to_value, features))
 
@@ -228,10 +247,11 @@ def extract_features(marker: str, dir_to_data: dict, features: list, all_dir: li
 
     feature_names = []
     for i, ch in enumerate(all_channels):
-        f_names = [f'{ch}_{f.name}' for f in features]
+        f_names = [f"{ch}_{f.name}" for f in features]
         feature_names.extend(f_names)
 
     return np.swapaxes(all_features_array, 0, -1), feature_names
+
 
 def _get_feature_values(features_to_trials: dict, features: list):
     """Get a marker's features.
@@ -249,6 +269,7 @@ def _get_feature_values(features_to_trials: dict, features: list):
     f_array = [features_to_trials[f] for f in features]
     return np.array(f_array)
 
+
 # should not concatenate all data.
 def concatenate_all_data(dir_to_data: dict, marker: str) -> Tuple[np.ndarray, dict]:
     all_participants_data = np.array([])
@@ -258,7 +279,11 @@ def concatenate_all_data(dir_to_data: dict, marker: str) -> Tuple[np.ndarray, di
         block_names.sort()
 
         sorted_data = get_sorted_block_to_data_by_marker(data, marker, block_names)
-        sorted_data = np.expand_dims(sorted_data, axis=0) if sorted_data.ndim == 2 else sorted_data
+        sorted_data = (
+            np.expand_dims(sorted_data, axis=0)
+            if sorted_data.ndim == 2
+            else sorted_data
+        )
         all_participants_data = (
             sorted_data
             if all_participants_data.ndim == 1

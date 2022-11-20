@@ -33,18 +33,6 @@ EEG_BANDS_NAMES = [
     Feature.GAMMA.name,
 ]
 
-STAT_FEATURES = [
-    Feature.STD,
-    Feature.PTP,
-    Feature.VAR,
-    Feature.MINIM,
-    Feature.MAXIM,
-    Feature.MEAN_SQUARE,
-    Feature.RMS,
-    Feature.ABS_DIFF,
-    Feature.SKEWNESS,
-    Feature.KURTOSIS,
-]
 
 # Yield successive n-sized
 # chunks from l.
