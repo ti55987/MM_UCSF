@@ -233,9 +233,11 @@ class BioMarkersInterface:
 
     def get_data_field(self, marker):
         if marker == TREV.__name__:
-            return "data1"
+            return "data2"
         elif marker == BP.__name__ or marker == GSR.__name__:
             return "raw"
+        elif marker == Resp.__name__:
+            return "rate"
 
         return "data"
 
@@ -262,11 +264,15 @@ class Mat73BioMarkers(BioMarkersInterface):
             return ["Systolic", "Diastolic"]
         elif marker == ECG.__name__:
             return ["HF", "LF", "LFHFratio", "avgHR"]
+        elif marker == EGG.__name__:
+            return ["filtered", "phase", "amplitude"]
+        elif marker in [EEG.__name__, EMG.__name__, EOG.__name__]:
+            locs = getattr(self.marker_to_namedtuple[marker], "chanlocs")["labels"]
+            if marker == EEG.__name__:
+                return [l["labels"] for l in locs]
+            return locs["labels"]
 
-        locs = getattr(self.marker_to_namedtuple[marker], "chanlocs")["labels"]
-        if marker == "EEG":
-            return [l["labels"] for l in locs]
-        return locs["labels"]
+        return [self.get_data_field(marker)]
 
     def get_all_data(self):
         marker_to_data = {}
@@ -338,8 +344,12 @@ class SIOBioMarkers(BioMarkersInterface):
             return ["Systolic", "Diastolic"]
         elif marker == ECG.__name__:
             return ["HF", "LF", "LFHFratio", "avgHR"]
+        elif marker == EGG.__name__:
+            return ["filtered", "phase", "amplitude"]
+        elif marker in [EEG.__name__, EMG.__name__, EOG.__name__]:
+            return [i[0][0] for i in self.marker_to_data[marker]["chanlocs"].item()[0]]
 
-        return [i[0][0] for i in self.marker_to_data[marker]["chanlocs"].item()[0]]
+        return [self.get_data_field(marker)]
 
     def get_all_data(self):
         marker_to_raw_data = {}
@@ -358,6 +368,15 @@ class SIOBioMarkers(BioMarkersInterface):
                         data["LF"].item(),
                         data["LFHFratio"].item(),
                         data["avgHR"].item(),
+                    ),
+                    axis=0,
+                )
+            elif marker == EGG.__name__:
+                marker_to_raw_data[marker] = np.concatenate(
+                    (
+                        data["filtered"].item(),
+                        data["phase"].item(),
+                        data["amplitude"].item(),
                     ),
                     axis=0,
                 )

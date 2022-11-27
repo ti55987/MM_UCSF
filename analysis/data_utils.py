@@ -155,7 +155,7 @@ def get_sorted_block_to_data_by_marker(
 
 
 def extract_features_by_channel(
-    marker: str, dir_to_data: dict, features: list, channel_num: int
+    marker: str, dir_to_data: dict, features: list, channel_num: int, channel_name: str
 ):
     dir_name_to_features = {}
     for dir_name, all_data in dir_to_data.items():
@@ -166,9 +166,6 @@ def extract_features_by_channel(
         dir_name_to_features[dir_name] = feature_to_value
 
     features_to_trials = defaultdict()
-    all_data = dir_to_data["../2000_CleanData"]
-    channel_name = all_data["audio_hvla"].get_chanlocs(marker)[channel_num]
-
     for dir_name, fv in dir_name_to_features.items():
         for f, v in fv.items():
             key = f"{channel_name}_{f.name}"
