@@ -236,8 +236,8 @@ class BioMarkersInterface:
             return "data2"
         elif marker == BP.__name__ or marker == GSR.__name__:
             return "raw"
-        elif marker == Resp.__name__:
-            return "rate"
+        # elif marker == Resp.__name__:
+        #     return "rate"
 
         return "data"
 
