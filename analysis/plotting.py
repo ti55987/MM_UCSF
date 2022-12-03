@@ -361,21 +361,23 @@ def plot_eeg_topomap_all_blocks(
     feature_to_rp: dict,
     num_epochs: int = 130,
 ):
+    all_features = list(feature_to_rp.keys())
+    width_ratios = [3] * len(all_features)
+    width_ratios.append(1)
+
     fig, axes = plt.subplots(
         1,
-        7,
+        len(all_features) + 1,
         figsize=(30, 5),
-        gridspec_kw={"width_ratios": [3, 3, 3, 3, 3, 3, 1]},
+        gridspec_kw={"width_ratios": width_ratios},
     )
 
     fig.suptitle(
         f"EEG spectral feature vs {condition} Pearson Correlation", fontsize=40, y=1.3
     )
 
-    all_features = []
     all_block_pc_mean = np.array([])
-    for f in list(EEG_BANDS.keys()):
-        all_features.append(f.name)
+    for f in all_features:
         pearson_corr = feature_to_rp[f][:, 0]
         all_block_pc_mean = (
             pearson_corr
@@ -384,7 +386,6 @@ def plot_eeg_topomap_all_blocks(
         )
 
     all_block_pc_mean = np.swapaxes(all_block_pc_mean, 0, 1)
-
     plot_eeg_topomap(all_block_pc_mean, all_features, axes, num_epochs)
 
 
