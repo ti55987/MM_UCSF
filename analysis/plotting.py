@@ -268,10 +268,11 @@ def plot_correlation_table_by_channel(
 def _get_pr_colors(cell_values, row_labels, col_lables):
     cellcolours = np.empty_like(cell_values, dtype="object")
     for i, cl in enumerate(row_labels):
-        cellcolours[i, 0] = _color_r_value(cell_values[i][0])
-        cellcolours[i, 1] = _color_p_value(cell_values[i][1])
-        cellcolours[i, 2] = _color_r_value(cell_values[i][2])
-        cellcolours[i, 3] = _color_p_value(cell_values[i][3])
+        for j, _ in enumerate(col_lables):
+            if j % 2 == 0:
+                cellcolours[i, j] = _color_r_value(cell_values[i][j])
+            else:
+                cellcolours[i, j] = _color_p_value(cell_values[i][j])
 
     return cellcolours
 

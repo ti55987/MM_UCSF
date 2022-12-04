@@ -211,6 +211,12 @@ ALL_MARKERS = [
 
 BEHAVIOR_LIST = ["valence", "arousal", "attention"]
 
+MARKER_TO_CHANNEL_NAMES = {
+    EEG.__name__: EEG_CHANEL_NAMES,
+    EMG.__name__: ["Corrugator", "Zygomaticus"],
+    EOG.__name__: ["LEOG", "VEOG"],
+}
+
 
 class BioMarkersInterface:
     def get_labels(self, name="valence"):

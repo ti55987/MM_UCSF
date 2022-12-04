@@ -38,4 +38,3 @@ def get_features_from_result(result: pd.DataFrame):
 
     feature_names = all_feature_array.columns
     return all_feature_array, feature_names
-    print(all_feature_array.shape, len(feature_names), len(label_list))
