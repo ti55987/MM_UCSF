@@ -17,6 +17,7 @@ dependencies:
   - seaborn
   - shap
   - pip=21.1.2
+  - plotly=5.11.0
   - pip:
       - tensorflow
       - sentencepiece

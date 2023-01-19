@@ -18,13 +18,13 @@ def load_data_from_csv(dir_name: str):
     return pd.concat(frames)
 
 
-def get_labels_from_result(result: pd.DataFrame):
+def get_labels_from_result(result: pd.DataFrame, valence_threshold=0.6):
     all_label_array = {
         "valence": result["Valence"].values,
         "arousal": result["Arousal"].values,
         "attention": result["Attention"].values,
     }
-    label_list = get_categorical_labels(all_label_array, valence_threshold=0.65)
+    label_list = get_categorical_labels(all_label_array, valence_threshold=valence_threshold)
     return all_label_array, label_list
 
 
