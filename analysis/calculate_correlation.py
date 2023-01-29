@@ -1,19 +1,10 @@
 from collections import defaultdict
 
 import numpy as np
-from scipy.stats import combine_pvalues
-from scipy.stats import kendalltau, pearsonr, spearmanr
-
 from biomarkers import BEHAVIOR_LIST
-from feature_extraction import (
-    get_feature_by_name,
-    Feature,
-)
-
-from data_utils import (
-    get_sorted_behavior_labels,
-    get_sorted_block_to_data_by_marker,
-)
+from data_utils import get_sorted_behavior_labels, get_sorted_block_to_data_by_marker
+from feature_extraction import Feature, get_feature_by_name
+from scipy.stats import combine_pvalues, pearsonr, spearmanr
 
 EEG_BANDS_LIST = [
     Feature.DELTA,

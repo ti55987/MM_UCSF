@@ -1,28 +1,27 @@
+from labels import get_tranformed_labels
+from sklearn.ensemble import GradientBoostingRegressor
 from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import mean_squared_error
+from sklearn.model_selection import GridSearchCV, GroupKFold
 from sklearn.pipeline import Pipeline
-
-
+from sklearn.preprocessing import StandardScaler
+from tensorflow.keras.backend import clear_session
 from tensorflow.keras.layers import (
-    Conv1D,
+    AveragePooling1D,
     BatchNormalization,
-    LeakyReLU,
-    MaxPool1D,
-    GlobalAveragePooling1D,
+    Conv1D,
     Dense,
     Dropout,
-    AveragePooling1D,
+    GlobalAveragePooling1D,
+    LeakyReLU,
+    MaxPool1D,
 )
 from tensorflow.keras.models import Sequential
-from tensorflow.keras.backend import clear_session
-from sklearn.model_selection import GroupKFold, GridSearchCV
-from sklearn.metrics import mean_squared_error
-from sklearn.ensemble import GradientBoostingRegressor
-from sklearn.preprocessing import StandardScaler
-
-from labels import get_tranformed_labels
 
 
-def cnn_model(input_x: int, input_y: int):
+def cnn_model(input_x: int, input_y: int, is_binary: bool = True):
+    final_output = 1 if is_binary else 4
+    loss = "binary_crossentropy" if is_binary else "categorical_crossentropy"
     clear_session()
     model = Sequential(
         [
@@ -44,11 +43,11 @@ def cnn_model(input_x: int, input_y: int):
             Conv1D(filters=5, kernel_size=3, strides=1),
             LeakyReLU(),
             GlobalAveragePooling1D(),
-            Dense(4, activation="sigmoid"),
+            Dense(final_output, activation="sigmoid"),
         ]
     )
 
-    model.compile("adam", loss="categorical_crossentropy", metrics=["accuracy"])
+    model.compile("adam", loss=loss, metrics=["accuracy"])
     return model
 
 
