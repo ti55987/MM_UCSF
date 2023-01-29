@@ -24,17 +24,21 @@ def get_labels_from_result(result: pd.DataFrame, valence_threshold=0.6):
         "arousal": result["Arousal"].values,
         "attention": result["Attention"].values,
     }
-    label_list = get_categorical_labels(all_label_array, valence_threshold=valence_threshold)
+    label_list = get_categorical_labels(
+        all_label_array, valence_threshold=valence_threshold
+    )
     return all_label_array, label_list
 
 
-def get_features_from_result(result: pd.DataFrame):
+def get_features_from_result(result: pd.DataFrame, should_drop_beta: bool = True):
     all_feature_array = result.drop(
         ["Subject", "Unnamed: 0", "Valence", "Arousal", "Attention"], axis=1
     )
-    all_feature_array = all_feature_array[
-        all_feature_array.columns.drop(list(all_feature_array.filter(regex="BETA")))
-    ]
+
+    if should_drop_beta:
+        all_feature_array = all_feature_array[
+            all_feature_array.columns.drop(list(all_feature_array.filter(regex="BETA")))
+        ]
 
     feature_names = all_feature_array.columns
     return all_feature_array, feature_names
