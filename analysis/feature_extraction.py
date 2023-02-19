@@ -1,6 +1,8 @@
-from scipy import stats
-import numpy as np
 from enum import Enum
+
+import numpy as np
+from features.psd import welch_bandpower
+from scipy import stats
 
 
 class Feature(Enum):
@@ -75,12 +77,12 @@ def argmaxim(data):
 
 
 def mean_square(data):
-    return np.mean(data**2, axis=AXIS)
+    return np.mean(data ** 2, axis=AXIS)
 
 
 # root mean square.
 def rms(data):
-    return np.sqrt(np.mean(data**2, axis=AXIS))
+    return np.sqrt(np.mean(data ** 2, axis=AXIS))
 
 
 def abs_diffs_signal(data):
@@ -128,27 +130,11 @@ def get_frequency_idx(sz, srate):
     return freq_ix
 
 
-def get_spectral_power(data, srate):
-    # Get real amplitudes of FFT (only in postive frequencies)
-    fft_vals = np.absolute(np.fft.rfft(data))
-    freq_ix = get_frequency_idx(len(data), srate)
-    # Take the mean of the fft amplitude for each EEG band
-    eeg_band_fft = dict()
-    for band, indices in freq_ix.items():
-        eeg_band_fft[band] = np.mean(fft_vals[indices])
-
-    return eeg_band_fft
-
-
-# data is (num_data_points, num_channels)
-def process_spectral_power_for_channels(data, srate):
-    features = []
-    for channel in range(data.shape[1]):
-        eeg_band_fft = get_spectral_power(data[:, channel], srate)
-        fft_values = list(eeg_band_fft.values())
-        features.append(fft_values)
-
-    return np.concatenate(features)
+def get_mean_spectral_power(data, srate):
+    bandpower = dict()
+    for band, values in EEG_BANDS.items():
+        bandpower[band] = welch_bandpower(data, srate, values)
+    return bandpower
 
 
 # data is (num_data_points, num_channels)
@@ -189,7 +175,7 @@ def get_feature_by_name(
             data = data[:, channel]
 
         if feature_name in EEG_BANDS.keys():
-            eeg_band_fft = get_spectral_power(data, 512)
+            eeg_band_fft = get_mean_spectral_power(data, 512)
             # (TODO) this should be optimized
             val = eeg_band_fft[feature_name]
         else:
@@ -201,9 +187,10 @@ def get_feature_by_name(
     return all_blocks_features
 
 
-def get_mean_spectral_power_features(
+def get_spectral_power_features(
     all_blocks: np.ndarray,
     channel: int = 0,
+    get_raw: bool = False,
 ):
     print(f"Extracting PSD features for {channel}...")
 
@@ -216,7 +203,7 @@ def get_mean_spectral_power_features(
         if data.ndim > 1:
             data = data[:, channel]
 
-        eeg_band_fft = get_spectral_power(data, 512)
+        eeg_band_fft = get_mean_spectral_power(data, 512)
         for f in EEG_BANDS.keys():
             if f not in name_to_features:
                 name_to_features[f] = []
