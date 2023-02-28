@@ -1,6 +1,6 @@
 import glob
-import pandas as pd
 
+import pandas as pd
 from labels import get_categorical_labels
 
 
@@ -30,10 +30,12 @@ def get_labels_from_result(result: pd.DataFrame, valence_threshold=0.6):
     return all_label_array, label_list
 
 
-def get_features_from_result(result: pd.DataFrame, should_drop_beta: bool = True):
-    all_feature_array = result.drop(
-        ["Subject", "Unnamed: 0", "Valence", "Arousal", "Attention"], axis=1
-    )
+def get_features_from_result(
+    result: pd.DataFrame,
+    dropped_columns=["Subject", "Unnamed: 0", "Valence", "Arousal", "Attention"],
+    should_drop_beta: bool = True,
+):
+    all_feature_array = result.drop(dropped_columns, axis=1)
 
     if should_drop_beta:
         all_feature_array = all_feature_array[
