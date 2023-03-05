@@ -1,7 +1,7 @@
 from enum import Enum
 
 import numpy as np
-from features.psd import welch_bandpower
+from features.psd import avg_welch_bandpower, welch_bandpower
 from scipy import stats
 
 
@@ -132,8 +132,9 @@ def get_frequency_idx(sz, srate):
 
 def get_mean_spectral_power(data, srate):
     bandpower = dict()
+    freqs, psd = welch_bandpower(data, srate, None, 2)
     for band, values in EEG_BANDS.items():
-        bandpower[band] = welch_bandpower(data, srate, values)
+        bandpower[band] = avg_welch_bandpower(freqs, psd, values)
     return bandpower
 
 

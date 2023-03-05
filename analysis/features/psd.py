@@ -1,7 +1,38 @@
 import numpy as np
 
 
-def welch_bandpower(data, sf, band, window_sec=None, relative=False):
+def calc_bands_power(x, dt, bands):
+    from scipy.signal import welch
+
+    f, psd = welch(x, fs=1.0 / dt)
+    power = {
+        band: np.mean(psd[np.where((f >= lf) & (f <= hf))])
+        for band, (lf, hf) in bands.items()
+    }
+    return power
+
+
+def avg_welch_bandpower(freqs, psd, band, relative=False):
+    from scipy.integrate import simps
+
+    band = np.asarray(band)
+    low, high = band
+
+    # Frequency resolution
+    freq_res = freqs[1] - freqs[0]
+
+    # Find closest indices of band in frequency vector
+    idx_band = np.logical_and(freqs >= low, freqs <= high)
+
+    # Integral approximation of the spectrum using Simpson's rule.
+    bp = simps(psd[idx_band], dx=freq_res)
+
+    if relative:
+        bp /= simps(psd, dx=freq_res)
+    return bp
+
+
+def welch_bandpower(data, sf, band, window_sec=None):
     """Compute the average power of the signal x in a specific frequency band.
 
     Parameters
@@ -24,30 +55,16 @@ def welch_bandpower(data, sf, band, window_sec=None, relative=False):
     bp : float
         Absolute or relative band power.
     """
-    from scipy.integrate import simps
-    from scipy.signal import welch
 
-    band = np.asarray(band)
-    low, high = band
+    from scipy.signal import welch
 
     # Define window length
     if window_sec is not None:
         nperseg = window_sec * sf
     else:
+        band = np.asarray(band)
+        low, _ = band
         nperseg = (2 / low) * sf
 
     # Compute the modified periodogram (Welch)
-    freqs, psd = welch(data, sf, nperseg=nperseg)
-
-    # Frequency resolution
-    freq_res = freqs[1] - freqs[0]
-
-    # Find closest indices of band in frequency vector
-    idx_band = np.logical_and(freqs >= low, freqs <= high)
-
-    # Integral approximation of the spectrum using Simpson's rule.
-    bp = simps(psd[idx_band], dx=freq_res)
-
-    if relative:
-        bp /= simps(psd, dx=freq_res)
-    return bp
+    return welch(data, sf, nperseg=nperseg)

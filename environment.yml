@@ -16,8 +16,10 @@ dependencies:
   - xgboost
   - seaborn
   - shap
+  - umap-learn
   - pip=21.1.2
   - plotly=5.11.0
+  - python-kaleido
   - pip:
       - tensorflow
       - sentencepiece

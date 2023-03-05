@@ -1,15 +1,23 @@
 import pandas as pd
 
 # plotly imports
-import plotly as py
 import plotly.graph_objs as go
-from plotly.offline import download_plotlyjs, init_notebook_mode, iplot, plot
+from plotly.offline import iplot
 
 # sklearn imports
-from sklearn.cluster import KMeans  # K-Means Clustering
 from sklearn.decomposition import PCA  # Principal Component Analysis
-from sklearn.manifold import TSNE  # T-Distributed Stochastic Neighbor Embedding
-from sklearn.preprocessing import StandardScaler  # used for 'Feature Scaling'
+from umap import UMAP
+
+
+def umap_2d(features: pd.DataFrame, colors: list, legend: str, title: str):
+    import plotly.express as px
+
+    umap2d = UMAP(n_components=2, init="random", random_state=0)
+    proj_2d = umap2d.fit_transform(features)
+    fig_2d = px.scatter(
+        proj_2d, x=0, y=1, color=colors, labels={"color": legend}, title=title
+    )
+    fig_2d.show()
 
 
 def pca_1d(features: pd.DataFrame, num_cluster: int, colors: list, title: str):
