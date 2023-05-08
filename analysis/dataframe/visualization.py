@@ -1,11 +1,15 @@
+import time
+
 import pandas as pd
 
 # plotly imports
 import plotly.graph_objs as go
+import seaborn as sns
 from plotly.offline import iplot
 
 # sklearn imports
 from sklearn.decomposition import PCA  # Principal Component Analysis
+from sklearn.manifold import TSNE  # T-Distributed Stochastic Neighbor Embedding
 from umap import UMAP
 
 
@@ -149,3 +153,30 @@ def pca_3d(features: pd.DataFrame, num_cluster: int, colors: list, title: str):
     fig = dict(data=data, layout=layout)
 
     iplot(fig)
+
+
+def tsne_2d(
+    features: pd.DataFrame,
+    title: str = "",
+):
+    # reference: https://builtin.com/data-science/tsne-python
+    # visualization via t-SNE
+    # Set our perplexity
+    perplexity = 50
+    time_start = time.time()
+    tsne = TSNE(n_components=2, verbose=1, perplexity=perplexity, n_iter=300)
+    tsne_results = pd.DataFrame(tsne.fit_transform(features.drop(["Cluster"], axis=1)))
+
+    print("t-SNE done! Time elapsed: {} seconds".format(time.time() - time_start))
+    tsne_results.columns = ["TSNE1_2d", "TSNE2_2d"]
+    plotX = pd.concat([features, tsne_results], axis=1, join="inner")
+
+    sns.scatterplot(
+        x="TSNE1_2d",
+        y="TSNE2_2d",
+        hue="y",
+        palette=sns.color_palette("hls", 10),
+        data=plotX,
+        legend="full",
+        alpha=0.3,
+    )
