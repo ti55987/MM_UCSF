@@ -237,6 +237,9 @@ class BioMarkersInterface:
     def get_times(self, marker: str) -> list:
         pass
 
+    def get_srate(self, marker: str) -> list:
+        pass
+
     def get_data_field(self, marker):
         if marker == TREV.__name__:
             return "data2"
@@ -264,6 +267,9 @@ class Mat73BioMarkers(BioMarkersInterface):
 
     def get_times(self, marker: str) -> list:
         return getattr(self.marker_to_namedtuple[marker], "times")
+    
+    def get_srate(self, marker: str) -> list:
+        return getattr(self.marker_to_namedtuple[marker], "srate")
 
     def get_chanlocs(self, marker: str):
         if marker == BP.__name__:
@@ -344,6 +350,9 @@ class SIOBioMarkers(BioMarkersInterface):
 
     def get_times(self, marker: str) -> list:
         return self.marker_to_data[marker]["times"].item()[0]
+    
+    def get_srate(self, marker: str) -> list:
+        return self.marker_to_data[marker]["srate"].item()[0][0]
 
     def get_chanlocs(self, marker: str):
         if marker == BP.__name__:

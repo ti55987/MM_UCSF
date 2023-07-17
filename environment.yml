@@ -5,6 +5,7 @@ channels:
   - pytorch
 dependencies:
   - openblas
+  - ipywidgets
   - python=3.8.10
   - pandas=1.4.1
   - numpy=1.24.3
