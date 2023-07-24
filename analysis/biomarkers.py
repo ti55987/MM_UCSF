@@ -241,16 +241,22 @@ class BioMarkersInterface:
         pass
 
     def get_data_field(self, marker):
-        if marker == TREV.__name__:
-            return "data2"
+        if marker == BP.__name__:
+            return ["systolic", "diastolic"]
+        elif marker == ECG.__name__:
+            return ["HF", "LF", "LFHFratio", "avgHR"]
+        elif marker == EGG.__name__:
+            return ["filtered", "phase", "amplitude"]
+        elif marker == TREV.__name__:
+            # data1 unit: ohms -> dZ(t) (ohms/s) blood velocity, 
+            # data2 unit: ohms/sec -> Blood Acceleration: dZ(t)/dt (ohms/s^2)
+            return ["data1", "data2"]         
         elif marker == BP.__name__ or marker == GSR.__name__:
-            return "raw"
-        # elif marker == Resp.__name__:
-        #     return "rate"
+            return ['raw']
 
-        return "data"
+        return ["data"]
 
-
+# Mat73BioMarkers is for old mat fields
 class Mat73BioMarkers(BioMarkersInterface):
     def __init__(self, marker_data: dict):
         self.marker_to_namedtuple = {}
@@ -272,19 +278,13 @@ class Mat73BioMarkers(BioMarkersInterface):
         return getattr(self.marker_to_namedtuple[marker], "srate")
 
     def get_chanlocs(self, marker: str):
-        if marker == BP.__name__:
-            return ["Systolic", "Diastolic"]
-        elif marker == ECG.__name__:
-            return ["HF", "LF", "LFHFratio", "avgHR"]
-        elif marker == EGG.__name__:
-            return ["filtered", "phase", "amplitude"]
-        elif marker in [EEG.__name__, EMG.__name__, EOG.__name__]:
+        if marker in [EEG.__name__, EMG.__name__, EOG.__name__]:
             locs = getattr(self.marker_to_namedtuple[marker], "chanlocs")["labels"]
             if marker == EEG.__name__:
                 return [l["labels"] for l in locs]
             return locs["labels"]
 
-        return [self.get_data_field(marker)]
+        return self.get_data_field(marker)
 
     def get_all_data(self):
         marker_to_data = {}
@@ -292,25 +292,13 @@ class Mat73BioMarkers(BioMarkersInterface):
             if marker == Behavior.__name__:
                 continue
 
-            if marker == BP.__name__:
-                marker_to_data[marker] = np.stack(
-                    (
-                        np.array(getattr(data, "systolic")),
-                        np.array(getattr(data, "diastolic")),
-                    ),
-                )
-            elif marker == ECG.__name__:
-                marker_to_data[marker] = np.stack(
-                    (
-                        np.array(getattr(data, "HF")),
-                        np.array(getattr(data, "LF")),
-                        np.array(getattr(data, "LFHFratio")),
-                        np.array(getattr(data, "avgHR")),
-                    ),
-                )
+            field_name = self.get_data_field(marker)
+            marker_data = [np.array(getattr(data, f)) for f in field_name]
+
+            if len(marker_data) > 1:
+                marker_to_data[marker] = np.stack(marker_data)                
             else:
-                field_name = self.get_data_field(marker)
-                marker_to_data[marker] = np.array(getattr(data, field_name))
+                marker_to_data[marker] = marker_data[0]
 
         return marker_to_data
 
@@ -335,7 +323,7 @@ class Mat73BioMarkers(BioMarkersInterface):
             print(getattr(data, field))
             exit = input("Exit inpecting this marker? [y/n]: ") == "y"
 
-
+# SIOBioMarkers is for new mat fields
 class SIOBioMarkers(BioMarkersInterface):
     def __init__(self, marker_data):
         self.marker_to_data = {}
@@ -355,16 +343,10 @@ class SIOBioMarkers(BioMarkersInterface):
         return self.marker_to_data[marker]["srate"].item()[0][0]
 
     def get_chanlocs(self, marker: str):
-        if marker == BP.__name__:
-            return ["Systolic", "Diastolic"]
-        elif marker == ECG.__name__:
-            return ["HF", "LF", "LFHFratio", "avgHR"]
-        elif marker == EGG.__name__:
-            return ["filtered", "phase", "amplitude"]
-        elif marker in [EEG.__name__, EMG.__name__, EOG.__name__]:
+        if marker in [EEG.__name__, EMG.__name__, EOG.__name__]:
             return [i[0][0] for i in self.marker_to_data[marker]["chanlocs"].item()[0]]
 
-        return [self.get_data_field(marker)]
+        return self.get_data_field(marker)
 
     def get_all_data(self):
         marker_to_raw_data = {}
@@ -372,30 +354,20 @@ class SIOBioMarkers(BioMarkersInterface):
             if marker == Behavior.__name__:
                 continue
 
-            if marker == BP.__name__:
-                marker_to_raw_data[marker] = np.concatenate(
-                    (data["systolic"].item(), data["diastolic"].item()), axis=0
-                )
-            elif marker == ECG.__name__:
-                marker_to_raw_data[marker] = np.concatenate(
-                    (
-                        data["HF"].item(),
-                        data["LF"].item(),
-                        data["LFHFratio"].item(),
-                        data["avgHR"].item(),
-                    ),
-                    axis=0,
-                )
-            elif marker == EGG.__name__:
-                marker_to_raw_data[marker] = np.concatenate(
-                    (
-                        data["filtered"].item(),
-                        data["phase"].item(),
-                        data["amplitude"].item(),
-                    ),
-                    axis=0,
-                )
+            field_name = self.get_data_field(marker)
+            marker_data = [data[f].item() for f in field_name]
+            if len(marker_data) > 1:
+                marker_to_raw_data[marker] = np.concatenate(marker_data, axis=0)
             else:
-                field_name = self.get_data_field(marker)
-                marker_to_raw_data[marker] = data[field_name].item()
+                marker_to_raw_data[marker] = marker_data[0]
         return marker_to_raw_data
+
+    def print_marker(self, marker_name):
+        print(f"Inspecting {marker_name} data...")
+        data = self.marker_to_data[marker_name]
+        exit = False
+        while not exit:
+            print(f"All Fields: {data.dtype}")
+            field = input("Enter the field to inspect:")
+            print(data[field].item())
+            exit = input("Exit inpecting this marker? [y/n]: ") == "y"
