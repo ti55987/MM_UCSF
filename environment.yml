@@ -1,15 +1,18 @@
 name: MM
 channels:
-  - defaults
   - conda-forge
   - pytorch
+  - defaults
 dependencies:
-  - openblas
-  - ipywidgets
   - python=3.8.10
+  - pytorch
+  - torchvision=0.12.0
+  #- cudatoolkit=11.3
   - pandas=1.4.1
   - numpy=1.24.3
   - scipy
+  - openblas
+  - ipywidgets
   - scikit-learn
   - matplotlib
   - tqdm=4.59.0
@@ -23,11 +26,12 @@ dependencies:
   - plotly
   - python-kaleido
   - pip:
-      - mat73
-      - sentencepiece
-      - mne
-      - jupyter_contrib_nbextensions
-      - biosppy
-      - sacrebleu
-      - nltk
-      - timeout_decorator
+    - cebra
+    - mat73
+    - sentencepiece
+    - mne
+    - jupyter_contrib_nbextensions
+    - biosppy
+    - sacrebleu
+    - nltk
+    - timeout_decorator

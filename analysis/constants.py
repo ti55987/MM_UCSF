@@ -21,3 +21,18 @@ SORTED_BLOCK_NAMES = [
 AUDIO_BLOCKS = ["audio_hvha", "audio_hvla", "audio_nvha", "audio_nvla"]
 
 ALL_EEG_BANDS = ["DELTA", "THETA", "ALPHA", "BETA1", "BETA2", "GAMMA"]
+
+COLOR_MAP = {
+    "audio_hvha": "red",
+    "audio_hvla": "magenta",
+    "audio_nvha": "green",
+    "audio_nvla": "olive",
+}
+V_COLOR_MAP = {
+    "hvha": "red",
+    "hvla": "magenta",
+    "nvha": "green",
+    "nvla": "olive",
+    "lvha": "blue",
+    "lvla": "steelblue",
+}
