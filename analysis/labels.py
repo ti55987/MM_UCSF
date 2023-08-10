@@ -20,21 +20,28 @@ def get_tranformed_labels(condition_to_labels: dict):
     return transformed
 
 # (TODO) combine attention + arousal to 2*2*2 = 8 classes
-def get_categorical_labels(condition_to_labels: dict, threshold=0.5, valence_threshold=0.75):
+def get_categorical_labels(condition_to_labels: dict, threshold=0.5, valence_threshold=0.6):
     valence_labels = condition_to_labels['valence']
     arousal_labels = condition_to_labels['arousal']
     claz = []
     for i, v_label in enumerate(valence_labels):
-       if arousal_labels[i] <= threshold and v_label <= valence_threshold: # nvla
+       label = get_behavioral_labels(v_label, arousal_labels[i], valence_threshold, threshold)
+       if label == 'nvla': # nvla
          claz.append(0)
-       elif arousal_labels[i] > threshold and v_label <= valence_threshold: # nvha
+       elif label == 'nvha': # nvha
          claz.append(1)
-       elif arousal_labels[i] <= threshold and v_label > valence_threshold: # hvla
+       elif label == 'hvla': # hvla
          claz.append(2)
        else: # hvha
          claz.append(3)
 
     return claz
+
+def get_behavioral_labels(valence, arousal, v_threshold=0.6, a_threshold=0.5):
+    a_label = 'la' if arousal < a_threshold else 'ha'
+    v_label = "nv" if valence < v_threshold else 'hv'
+
+    return v_label + a_label
 
 def print_label_count(label_list: list):
     num_to_count = {0:0, 1: 0, 2: 0, 3:0}

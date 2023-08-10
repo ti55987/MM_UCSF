@@ -52,8 +52,10 @@ def welch_bandpower(data, sf, band, window_sec=None):
 
     Return
     ------
-    bp : float
-        Absolute or relative band power.
+    f: ndarray
+        Array of sample frequencies.
+    Pxx: ndarray
+        Power spectral density or power spectrum of x.        
     """
 
     from scipy.signal import welch

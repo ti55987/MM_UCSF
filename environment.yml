@@ -6,17 +6,17 @@ channels:
 dependencies:
   - python=3.8.10
   - pytorch
-  - torchvision=0.12.0
+  #- torchvision=0.12.0
   #- cudatoolkit=11.3
   - pandas=1.4.1
+  - nb_conda
   - numpy=1.24.3
-  - scipy
   - openblas
   - ipywidgets
-  - scikit-learn
   - matplotlib
   - tqdm=4.59.0
   - docopt=0.6.2
+  - jupyter
   - notebook
   - xgboost
   - seaborn
@@ -26,6 +26,8 @@ dependencies:
   - plotly
   - python-kaleido
   - pip:
+    - scipy
+    - sklearn
     - cebra
     - mat73
     - sentencepiece
