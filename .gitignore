@@ -4,3 +4,4 @@ __pycache__/
 *.csv
 analysis/.ipynb_checkpoints/
 results/
+analysis/saved_models/
