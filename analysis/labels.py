@@ -37,6 +37,20 @@ def get_categorical_labels(condition_to_labels: dict, threshold=0.5, valence_thr
 
     return claz
 
+def get_raw_labels(blocks, subject_data):
+    v_labels = []
+    a_labels = []
+    attention_labels = []
+
+    for b in blocks:
+        block_data = subject_data[b]
+
+        v_labels.extend(block_data.get_labels().flatten())
+        a_labels.extend(block_data.get_labels("arousal").flatten())
+        attention_labels.extend(block_data.get_labels("attention").flatten())
+
+    return v_labels, a_labels, attention_labels
+
 def get_behavioral_labels(valence, arousal, v_threshold=0.6, a_threshold=0.5):
     a_label = 'la' if arousal < a_threshold else 'ha'
     v_label = "nv" if valence < v_threshold else 'hv'

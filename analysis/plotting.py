@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 import mne
 import matplotlib.pyplot as plt
+import seaborn as sns
 
 from biomarkers import (
     EEG_CHANEL_NAMES,
@@ -416,3 +417,63 @@ def plot_eeg_topomap(data, xlables, axes, num_epochs):
     efig.axes[-1].set_title("Score", fontsize=25)
     efig.axes[-1].tick_params(labelsize=25)
     plt.show()
+
+def subplot_confusion_matrix(cf,
+                          ax=None,
+                          group_names=None,
+                          categories='auto',
+                          count=True,
+                          percent='all',
+                          cbar=True,
+                          cbar_ax=None,
+                          xyticks=True,
+                          vmin=0, vmax=3000,
+                          cmap='Blues'):
+
+    # CODE TO GENERATE TEXT INSIDE EACH SQUARE
+    blanks = ['' for i in range(cf.size)]
+
+    if group_names and len(group_names)==cf.size:
+        group_labels = ["{}\n".format(value) for value in group_names]
+    else:
+        group_labels = blanks
+
+    if count:
+        group_counts = ["{0:0.0f}\n".format(value) for value in cf.flatten()]
+    else:
+        group_counts = blanks
+
+    if percent == 'all':
+        group_percentages = ["{0:.2%}".format(value) for value in cf.flatten()/np.sum(cf)]
+    elif percent == 'by_row':
+        group_percentages = []
+        cf_matrix = []
+        for cfg in cf:
+            values = ["{0:.2%}".format(value) for value in cfg/np.sum(cfg)]
+            group_percentages.extend(values)
+            cf_matrix.append([float("{0:.2}".format(value)) for value in cfg/np.sum(cfg)])
+        
+        cf = np.array(cf_matrix)
+    else:
+        group_percentages = blanks
+
+    box_labels = [f"{v1}{v2}{v3}".strip() for v1, v2, v3 in zip(group_labels,group_counts,group_percentages)]
+    box_labels = np.asarray(box_labels).reshape(cf.shape[0],cf.shape[1])
+
+    if xyticks==False:
+        #Do not show categories if xyticks is False
+        categories=False
+
+
+    # MAKE THE HEATMAP VISUALIZATION
+    return sns.heatmap(
+      cf,
+      annot=box_labels,
+      fmt="",
+      cmap=cmap,
+      cbar=cbar,
+      cbar_ax=cbar_ax,
+      vmin=vmin, vmax=vmax,
+      xticklabels=categories,
+      yticklabels=categories, 
+      ax=ax)
