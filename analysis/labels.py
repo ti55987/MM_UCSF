@@ -1,3 +1,5 @@
+import numpy as np
+
 def binary_label(all_labels, threshold=0.5):
     y_transformed = []
     c0, c1 = 0, 0
@@ -37,7 +39,7 @@ def get_categorical_labels(condition_to_labels: dict, threshold=0.5, valence_thr
 
     return claz
 
-def get_raw_labels(blocks, subject_data):
+def get_raw_labels(blocks, subject_data, num_repeat: int=1):
     v_labels = []
     a_labels = []
     attention_labels = []
@@ -45,11 +47,24 @@ def get_raw_labels(blocks, subject_data):
     for b in blocks:
         block_data = subject_data[b]
 
-        v_labels.extend(block_data.get_labels().flatten())
-        a_labels.extend(block_data.get_labels("arousal").flatten())
-        attention_labels.extend(block_data.get_labels("attention").flatten())
+        vl = np.repeat(block_data.get_labels().flatten(), num_repeat)
+        arl = np.repeat(block_data.get_labels('arousal').flatten(), num_repeat)
+        atl = np.repeat(block_data.get_labels('attention').flatten(), num_repeat)
+        v_labels.extend(vl)
+        a_labels.extend(arl)
+        attention_labels.extend(atl)
 
     return v_labels, a_labels, attention_labels
+
+def get_label_means(subject_data: dict):
+    v_labels = []
+    a_labels = []
+
+    for _, data in subject_data.items():
+        v_labels.extend(data.get_labels().flatten())
+        a_labels.extend(data.get_labels("arousal").flatten())
+
+    return np.mean(v_labels), np.mean(a_labels)
 
 def get_behavioral_labels(valence, arousal, v_threshold=0.6, a_threshold=0.5):
     a_label = 'la' if arousal < a_threshold else 'ha'
