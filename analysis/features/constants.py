@@ -8,6 +8,7 @@ class Feature(Enum):
     BETA1 = 4
     BETA2 = 5
     GAMMA = 6
+    ALL_SPECTRAL = 18
     MEAN = 7
     STD = 8
     PTP = 9
