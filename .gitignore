@@ -2,6 +2,7 @@
 *.mat
 __pycache__/
 *.csv
+*.pkl
 analysis/.ipynb_checkpoints/
 results/
 analysis/saved_models/

@@ -58,3 +58,20 @@ def get_validation_indexes(num_train_set: int = 52, num_block: int = 4):
         indexes.extend(random.sample(population, k))
 
     return indexes
+
+def slice_data_by_seconds(block_data, srate: int, second_per_slice: int):
+    # Original shape: (num_channel, time_series_per_trial, num_trials): (128, 12288, 13)
+    num_seq_per_slice = srate * second_per_slice
+    # Discard the first few slice because of the noise in each trial: (128, 12288-num_seq_per_slice, 13)
+    trimmed_data = block_data[:, num_seq_per_slice:, :]
+    # swap trial and time series: (num_channel, num_trials, time_series_per_trial)
+    trimmed_data = np.swapaxes(trimmed_data, 1, 2)
+    num_trial, num_seq_per_trial = trimmed_data.shape[-2], trimmed_data.shape[-1]
+
+    d = []
+    for t in range(num_trial):
+        for i in range(0, num_seq_per_trial, num_seq_per_slice):
+            d.append(trimmed_data[:, t, i : i + num_seq_per_slice])
+    # New shape: (num_trials*num_slices_per_trial, num_channel, time_series_per_slice):
+    #  (13*num_slices_per_trial, 128, num_seq_per_slice)
+    return np.stack(d, axis=0)
