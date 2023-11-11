@@ -64,7 +64,7 @@ def run_knn_decoder(
             val_data=val_data,
             train_labels=train_labels,
             use_pca=(method == "PCA"),
-            out_dim=output_dim,
+            out_dim= 6 if method == "PCA" else output_dim,
             num_hidden_units=max_hidden_units,
         )
         all_embeddings.append(embedding)

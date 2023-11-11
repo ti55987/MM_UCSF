@@ -538,3 +538,112 @@ def plot_roc_curve(predicted_labels, true_labels, method, label_type, channel, f
     ax.legend(loc="lower right")
     
     return fig
+
+def set_pane_axis(ax):
+    ax.xaxis.set_pane_color((1.0, 1.0, 1.0, 0.0))
+    ax.yaxis.set_pane_color((1.0, 1.0, 1.0, 0.0))
+    ax.zaxis.set_pane_color((1.0, 1.0, 1.0, 0.0))
+    ax.xaxis._axinfo["grid"]["color"] = (1, 1, 1, 0)
+    ax.yaxis._axinfo["grid"]["color"] = (1, 1, 1, 0)
+    ax.zaxis._axinfo["grid"]["color"] = (1, 1, 1, 0)
+    ax.xaxis.set_ticks([])
+    ax.yaxis.set_ticks([])
+    ax.zaxis.set_ticks([])
+
+def plot_3d_embeddings(list_embedding_tuple, title):
+    n_row, n_col = (2, 3) if len(list_embedding_tuple) == 6 else (1, 4)
+    fig, axes = plt.subplots(
+        nrows=n_row,
+        sharey=True,
+        ncols=n_col,
+        figsize=(n_col * 5, n_row * 5),
+        subplot_kw=dict(projection="3d"),
+    )
+    idx1, idx2, idx3 = (0, 1, 2)
+    for idx, (title, embeddings, embedding_labels) in enumerate(list_embedding_tuple):
+        y = axes.flat[idx].scatter(
+            embeddings[:, idx1],
+            embeddings[:, idx2],
+            embeddings[:, idx3],
+            cmap="cool",
+            c=embedding_labels,
+            s=5,
+            vmin=0,
+            vmax=1,
+        )
+        axes.flat[idx].set_title(title)
+        yc = plt.colorbar(y, fraction=0.03, pad=0.05, ticks=np.linspace(0, 1, 9))
+        yc.ax.tick_params(labelsize=10)
+        yc.ax.set_title("score", fontsize=10)    
+        set_pane_axis(axes.flat[idx])        
+        
+    fig.suptitle(f'{title} Latents: (1,2,3)')
+
+
+def plot_umap_embeddings(list_embedding_tuple):
+    from umap import UMAP
+    for (title, embeddings, embedding_labels) in list_embedding_tuple:
+        if 'GAMMA' in title:
+            components = embeddings
+            color = embedding_labels
+            break
+
+    fig, axes = plt.subplots(
+        nrows=3,
+        sharey=True,
+        ncols=2,
+        figsize=(2 * 5, 3 * 5),
+    )
+    a = [0.0001, 0.001, 0.1, 1, 10, 50]
+    for idx, ax in enumerate(axes.flat):
+        umap2d = UMAP(n_components=2, a=0.0001, b=2)
+        proj_2d = umap2d.fit_transform(components)
+        y = ax.scatter(
+            proj_2d[:, 0],
+            proj_2d[:, 1],
+            cmap="cool",
+            c=color,
+            s=5,
+            vmin=0,
+            vmax=1,
+        )
+        ax.set_title(title)
+        yc = plt.colorbar(y, fraction=0.03, pad=0.05, ticks=np.linspace(0, 1, 9))
+        yc.ax.tick_params(labelsize=10)
+        yc.ax.set_title("score", fontsize=10)
+
+def umap_visualization(components):
+    from umap import UMAP
+    umap2d = UMAP(n_components=2, a=0.0001, b=2)
+    return umap2d.fit_transform(components)
+
+def tsne_visualization(components):
+    from sklearn.manifold import TSNE
+    tsne2d = TSNE(n_components=2, random_state=0) 
+    return tsne2d.fit_transform(components) 
+
+def plot_embeddings(list_embedding_tuple, method, label_type, visualization_func):
+    n_row, n_col = (2, 3) if len(list_embedding_tuple) == 6 else (1, 4)
+    fig, axes = plt.subplots(
+        nrows=n_row,
+        sharey=True,
+        ncols=n_col,
+        figsize=(n_col * 5, n_row * 5),
+    )
+    for idx, (title, embeddings, embedding_labels) in enumerate(list_embedding_tuple):
+        proj_2d = visualization_func(embeddings)
+        y = axes.flat[idx].scatter(
+            proj_2d[:, 0],
+            proj_2d[:, 1],
+            cmap="cool",
+            c=embedding_labels,
+            s=5,
+            vmin=0,
+            vmax=1,
+        )
+        axes.flat[idx].set_title(title)
+        yc = plt.colorbar(y, fraction=0.03, pad=0.05, ticks=np.linspace(0, 1, 9))
+        yc.ax.tick_params(labelsize=10)
+        yc.ax.set_title("score", fontsize=10)    
+        
+    fig.suptitle(f'{visualization_func.__name__}:{method} embedding - {label_type}')   
