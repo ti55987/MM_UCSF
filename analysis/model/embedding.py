@@ -1,8 +1,10 @@
 
 import numpy as np
+import matplotlib.pyplot as plt
 
 from sklearn.decomposition import PCA
 from cebra import CEBRA, KNNDecoder
+import cebra
 
 def model_fit(
     neural_data,
@@ -25,9 +27,51 @@ def model_fit(
         single_cebra_model.fit(neural_data)
     else:
         single_cebra_model.fit(neural_data, behavioral_labels)
-    # cebra.plot_loss(single_cebra_model)
+    
+    cebra.plot_loss(single_cebra_model)
     return single_cebra_model
 
+def plot_umap_embeddings(list_embedding_tuple, method, label_type):
+    from umap import UMAP
+    for (title, embeddings, embedding_labels) in list_embedding_tuple:
+        if 'GAMMA' in title:
+            components = embeddings
+            color = embedding_labels
+            break
+
+    fig, axes = plt.subplots(
+        nrows=3,
+        sharey=True,
+        ncols=2,
+        figsize=(2 * 5, 3 * 5),
+    )
+    a = [0.0001, 0.001, 0.1, 1, 10, 50]
+    for idx, ax in enumerate(axes.flat):
+        umap2d = UMAP(n_components=2, a=0.0001, b=2)
+        proj_2d = umap2d.fit_transform(components)
+        y = ax.scatter(
+            proj_2d[:, 0],
+            proj_2d[:, 1],
+            cmap="cool",
+            c=color,
+            s=5,
+            vmin=0,
+            vmax=1,
+        )
+        ax.set_title(title)
+        yc = plt.colorbar(y, fraction=0.03, pad=0.05, ticks=np.linspace(0, 1, 9))
+        yc.ax.tick_params(labelsize=10)
+        yc.ax.set_title("score", fontsize=10)
+
+def tsne_visualization(components):
+    from sklearn.manifold import TSNE
+    tsne2d = TSNE(n_components=2, random_state=0) 
+    return tsne2d.fit_transform(components) 
+
+def umap_visualization(components):
+    from umap import UMAP
+    umap2d = UMAP(n_components=2, a=0.0001, b=2)
+    return umap2d.fit_transform(components)
 
 def get_embeddings(
     train_data,

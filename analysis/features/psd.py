@@ -81,7 +81,7 @@ def get_psd(trial_data, srate, band):
 
     return psd[idx_band]
 
-
+# TO BE DEPRECATED
 def get_psd_by_channel(block_data, marker, channel_type: str, feature: Feature):
     psd_data = []
     time_series_data = block_data.get_all_data()[marker]
@@ -106,3 +106,23 @@ def get_psd_by_channel(block_data, marker, channel_type: str, feature: Feature):
         )
 
     return psd_data
+
+def get_eeg_psd_by_channel_band(block_data, channel_type: str, srate: int, feature):
+    from biomarkers import EEG_CHANEL_NAMES
+
+    psd_data = []
+    num_trials = block_data.shape[0]
+    # loop through all trials: time -> frequency
+    for t in range(num_trials):
+        all_channel_psd = []
+        for i, c in enumerate(EEG_CHANEL_NAMES):
+            if not c.startswith(channel_type):
+                continue
+
+            psd = get_psd(block_data[t, i, :], srate, EEG_BANDS[feature])
+            all_channel_psd.append(psd)
+
+        all_channel_psd = np.concatenate(all_channel_psd)
+        psd_data.append(all_channel_psd)
+
+    return np.stack(psd_data, axis=0)
