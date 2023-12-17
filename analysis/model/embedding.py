@@ -28,7 +28,7 @@ def model_fit(
     else:
         single_cebra_model.fit(neural_data, behavioral_labels)
     
-    cebra.plot_loss(single_cebra_model)
+    #cebra.plot_loss(single_cebra_model)
     return single_cebra_model
 
 def plot_umap_embeddings(list_embedding_tuple, method, label_type):
