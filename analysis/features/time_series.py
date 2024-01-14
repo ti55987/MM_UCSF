@@ -1,6 +1,7 @@
 import numpy as np
 
 from labels import get_behavioral_labels
+from biomarkers import EEG_CHANEL_NAMES
 
 def get_time_series_data_by_channel(block_data, marker, channel_type: str):
     channel_data = []
@@ -50,3 +51,21 @@ def get_block_time_series_features(blocks, subject_data, marker, channel):
         raw_data = np.vstack((psd_data, raw_data)) if len(raw_data) > 0 else psd_data
 
     return raw_data, behavioral_labels
+
+
+def get_time_series_by_channel(sliced_data, channel_type: str, channel_list: list=EEG_CHANEL_NAMES):
+    all_data = []
+    num_trials = sliced_data.shape[0]
+    # loop through all trials: time -> frequency
+    for t in range(num_trials):
+        all_channel_data = []
+        for i, c in enumerate(channel_list):
+            if not c.startswith(channel_type):
+                continue
+
+            all_channel_data.append(sliced_data[t, i, :])
+
+        all_channel_data = np.concatenate(all_channel_data)
+        all_data.append(all_channel_data)
+
+    return np.stack(all_data, axis=0)

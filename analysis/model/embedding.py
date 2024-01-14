@@ -31,6 +31,36 @@ def model_fit(
     #cebra.plot_loss(single_cebra_model)
     return single_cebra_model
 
+
+def plot_embeddings_breakdown(list_embedding_tuple, method, label_type):
+    import plotly.express as px
+
+    for (title, embeddings, embedding_labels) in list_embedding_tuple:
+        if 'GAMMA' in title:
+            components = embeddings
+            color = embedding_labels
+            break
+
+    n_components = components.shape[-1]
+    labels = {str(i): f"L {i+1}" for i in range(n_components)}
+    
+    fig = px.scatter_matrix(
+        components,
+        labels=labels,
+        dimensions=range(n_components),
+        color=color,
+        range_color=[0, 1],
+        #size_max=3,
+        title=f'{method} embedding - {label_type}',
+        height=800, width=800
+    )
+    
+    fig.update_layout({"xaxis"+str(i+1): dict(showticklabels = False) for i in range(n_components)})
+    fig.update_layout({"yaxis"+str(i+1): dict(showticklabels = False) for i in range(n_components)})
+    fig.update_traces(marker=dict(size=3))
+    fig.update_traces(diagonal_visible=False)
+    fig.show()
+
 def plot_umap_embeddings(list_embedding_tuple, method, label_type):
     from umap import UMAP
     for (title, embeddings, embedding_labels) in list_embedding_tuple:

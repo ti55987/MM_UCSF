@@ -2,6 +2,7 @@ from enum import Enum
 
 
 class Feature(Enum):
+    EEG_SPECTRAL = 28
     DELTA = 1
     THETA = 2
     ALPHA = 3
@@ -31,6 +32,8 @@ class Feature(Enum):
     EGG_PHASE = 24
     EGG_AMPLITUDE = 25
     TREV_VELOCITY = 26
+
+    RAW_DATA = 27
 
 
 AXIS = 0

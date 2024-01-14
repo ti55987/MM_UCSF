@@ -25,6 +25,8 @@ dependencies:
   - pip=21.1.2
   - plotly
   - python-kaleido
+  # https://github.com/neuropsychology/NeuroKit?tab=readme-ov-file
+  - neurokit2 
   - pip:
     - scipy
     - sklearn

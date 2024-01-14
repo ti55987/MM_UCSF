@@ -243,8 +243,8 @@ class BioMarkersInterface:
     def get_data_field(self, marker):
         if marker == BP.__name__:
             return ["systolic", "diastolic"]
-        elif marker == ECG.__name__:
-            return ["HF", "LF", "LFHFratio", "avgHR"]
+        # elif marker == ECG.__name__:
+        #     return ["HF", "LF", "LFHFratio", "avgHR"]
         elif marker == EGG.__name__:
             return ["filtered", "phase", "amplitude"]
         elif marker == TREV.__name__:

@@ -1,6 +1,7 @@
 import numpy as np
 
 from features.psd import get_eeg_psd_by_channel_band, get_psd_by_channel
+from features.time_series import get_time_series_by_channel
 from features.constants import Feature, MARKER_TO_FEATURE
 from feature_extraction import EEG_BANDS
 
@@ -10,15 +11,17 @@ from resample.resample import (
 
 from constants import AUDIO_BLOCKS
 
-def get_features(block_data, marker, channel_type: str, srate: int, feature):
-    if marker == "EEG":
+def get_features(block_data, channel_type: str, srate: int, feature):
+    if feature in list(EEG_BANDS.keys()):
         return get_eeg_psd_by_channel_band(block_data, channel_type, srate, feature)
-    if feature == Feature.ECG_HF or feature == Feature.EGG_FILTERED:
+    elif feature == Feature.ECG_HF or feature == Feature.EGG_FILTERED:
         return block_data[:, 0, :]
     elif feature == Feature.ECG_LF or feature == Feature.EGG_PHASE:
         return block_data[:, 1, :]
     elif feature == Feature.ECG_LFHF or feature == Feature.EGG_AMPLITUDE:
         return block_data[:, 2, :]
+    else:
+        return get_time_series_by_channel(block_data, channel_type)
 
 
 def get_block_features(
@@ -33,7 +36,7 @@ def get_block_features(
             sliced_data = slice_data_by_seconds(
                 block_data.get_all_data()[marker], srate, 4
             )
-            psd_data = get_features(sliced_data, marker, channel, srate, feature)
+            psd_data = get_features(sliced_data, channel, srate, feature)
         else:
             psd_data = get_psd_by_channel(block_data, marker, channel, feature)
 
@@ -42,25 +45,25 @@ def get_block_features(
     return features
 
 
-def get_eeg_channel_feature_to_data(subject_data, marker: str = "EEG"):
+def get_eeg_channel_feature_to_data(subject_data, block_list, feature_list):
     sliced_channel_feature_to_data = {"A": {}, "B": {}, "C": {}, "D": {}}
     for c in sliced_channel_feature_to_data.keys():
-        for f in EEG_BANDS.keys():
+        for f in feature_list: #EEG_BANDS.keys():
             raw_data = get_block_features(
-                AUDIO_BLOCKS, subject_data, marker, c, f, True
+                block_list, subject_data, 'EEG', c, f, True
             )
-            sliced_channel_feature_to_data[c][f] = raw_data
+            sliced_channel_feature_to_data[c][f.name] = raw_data
 
     return sliced_channel_feature_to_data
 
 
-def get_feature_to_data(subject_data, block_list: list=AUDIO_BLOCKS, marker: str = "EEG"):
+def get_feature_to_data(subject_data, block_list: list, feature_list: list, marker: str = "EEG"):
     if marker == "EEG":
-        return get_eeg_channel_feature_to_data(subject_data, marker)
+        return get_eeg_channel_feature_to_data(subject_data, block_list, feature_list)
 
-    sliced_feature_to_data = {marker: {f: {} for f in MARKER_TO_FEATURE[marker]}}
-    for f in sliced_feature_to_data[marker].keys():
+    sliced_feature_to_data = {}
+    for f in feature_list:
         raw_data = get_block_features(block_list, subject_data, marker, "", f, True)
-        sliced_feature_to_data[marker][f] = raw_data
+        sliced_feature_to_data[f.name] = raw_data
 
     return sliced_feature_to_data

@@ -119,7 +119,7 @@ def get_eeg_psd_by_channel_band(block_data, channel_type: str, srate: int, featu
             if not c.startswith(channel_type):
                 continue
 
-            psd = get_psd(block_data[t, i, :], srate, EEG_BANDS[feature])
+            psd = get_psd(block_data[t, i, :], srate, EEG_BANDS[feature]) 
             all_channel_psd.append(psd)
 
         all_channel_psd = np.concatenate(all_channel_psd)
