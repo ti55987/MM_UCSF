@@ -23,6 +23,20 @@ def get_features(block_data, channel_type: str, srate: int, feature):
     else:
         return get_time_series_by_channel(block_data, channel_type)
 
+def get_block_raw_data_by_marker(subject_data, blocks, marker, second_per_slice):
+    from resample.resample import (
+        slice_data_by_seconds,
+    )
+
+    block_to_data = {}
+    for b in blocks:
+        block_data = subject_data[b]
+        srate =  block_data.get_srate(marker)
+        sliced_data = slice_data_by_seconds(block_data.get_all_data()[marker], srate, second_per_slice)
+        sliced_data = sliced_data[:, 0, :]
+        block_to_data[b] = sliced_data
+    
+    return block_to_data  
 
 def get_block_features(
     blocks, subject_data, marker, channel, feature, with_sliced: bool = False

@@ -17,6 +17,7 @@ def model_fit(
         # model_architecture = "offset10-model",
         batch_size=512,
         temperature_mode="auto",
+        #device='cpu',
         output_dimension=out_dim,
         max_iterations=max_iterations,
         num_hidden_units=num_hidden_units,

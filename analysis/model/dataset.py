@@ -16,7 +16,10 @@ class DatasetBuilder():
             self.no_shuffled_train_indxes.append(train_indexes)
             self.no_shuffled_val_indxes.append(val_indexes)      
 
-
+    def set_shuffled_indexes(self, shuffled_train_indexes, shuffled_val_indexes):
+        self.shuffled_train_indexes = shuffled_train_indexes
+        self.shuffled_val_indexes = shuffled_val_indexes
+        
     def get_shuffled_indexes(self):
         return self.shuffled_train_indexes, self.shuffled_val_indexes
     
@@ -24,14 +27,14 @@ class DatasetBuilder():
     def train_test_split(self, data, ecg_data, behavioral_labels, no_shuffle: bool=True):
         dataset = []
         val_indxes = self.no_shuffled_val_indxes if no_shuffle else self.shuffled_val_indexes
-        train_indxes = self.no_shuffled_train_indxes if no_shuffle else self.shuffled_train_indexes
+        train_label_indxes = self.no_shuffled_train_indxes if no_shuffle else self.shuffled_train_indexes
         
         for idx, val_indexes in enumerate(val_indxes):
-            train_indexes = train_indxes[idx]
-            train_labels = np.array(behavioral_labels)[train_indxes[idx]]
+            train_labels = np.array(behavioral_labels)[train_label_indxes[idx]]
             val_label = np.array(behavioral_labels)[val_indexes]
-
-            train_data = [data[train_indexes], ecg_data[train_indexes]] if len(ecg_data) > 0 else [data[train_indexes]]
+            
+            train_data_indexes = self.no_shuffled_train_indxes[idx]
+            train_data = [data[train_data_indexes], ecg_data[train_data_indexes]] if len(ecg_data) > 0 else [data[train_data_indexes]]
             val_data = [data[val_indexes], ecg_data[val_indexes]] if len(ecg_data) > 0 else [data[val_indexes]]
             
             dataset.append((train_data, train_labels, val_data, val_label))

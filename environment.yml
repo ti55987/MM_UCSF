@@ -5,7 +5,7 @@ channels:
   - defaults
 dependencies:
   - python=3.8.10
-  - pytorch
+  - pytorch=2.1
   #- torchvision=0.12.0
   #- cudatoolkit=11.3
   - pandas=1.4.1
@@ -27,10 +27,12 @@ dependencies:
   - python-kaleido
   # https://github.com/neuropsychology/NeuroKit?tab=readme-ov-file
   - neurokit2 
+  - neurodsp
   - pip:
     - scipy
     - sklearn
     - cebra
+    - chardet
     - mat73
     - sentencepiece
     - mne
