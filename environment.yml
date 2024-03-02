@@ -26,9 +26,11 @@ dependencies:
   - plotly
   - python-kaleido
   # https://github.com/neuropsychology/NeuroKit?tab=readme-ov-file
-  - neurokit2 
-  - neurodsp
+  - neurokit2 # ECG computation kit
+  - neurodsp # wavelet computation kit
+  - pywavelets # variety of wavelet computation kit
   - pip:
+    - kymatio
     - scipy
     - sklearn
     - cebra
